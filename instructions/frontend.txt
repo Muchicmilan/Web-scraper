@@ -1,0 +1,171 @@
+# Frontend Schema Builder - User Flow
+
+## Overview
+
+This document outlines the user flow for configuring custom JSON schemas through the frontend interface. Since you already know which website you want to scrape, this interface will allow you to define exactly how the data should be structured.
+
+## User Flow Steps
+
+### 1. Initial Setup
+
+1. User navigates to "Scraper Configuration" section
+2. User enters target website URL
+3. System loads the website in a preview iframe or takes a snapshot
+4. User selects "Configure Schema" option
+
+### 2. Schema Definition
+
+1. User creates a new schema with a name
+2. System presents a schema builder interface with:
+   - Field name input
+   - Data type selector (string, number, boolean, object, array)
+   - Description field
+   - Required/Optional toggle
+   - Validation rules section
+
+3. User adds fields to the schema:
+   ```json
+   {
+     "title": { "type": "string", "required": true },
+     "content": { "type": "string" },
+     "publishDate": { "type": "string", "format": "date" },
+     "author": {
+       "type": "object",
+       "properties": {
+         "name": { "type": "string" },
+         "bio": { "type": "string" }
+       }
+     },
+     "tags": {
+       "type": "array",
+       "items": { "type": "string" }
+     }
+   }
+   ```
+
+4. For each field, the user can:
+   - Set a specific data type
+   - Add nested fields (for objects)
+   - Define array item structure
+   - Add validation rules
+
+### 3. Element Mapping
+
+1. With schema fields defined, the system displays:
+   - Website preview on one side
+   - Schema structure on the other side
+
+2. For each schema field, user can:
+   - Click on the field to activate it
+   - Then click on an element in the website preview
+   - System suggests a CSS selector for that element
+   - User can refine the selector if needed
+   - User selects extraction method (text, HTML, attribute)
+
+3. For complex fields:
+   - Arrays: User defines a list selector and an item selector
+   - Objects: User maps each nested field to appropriate elements
+
+4. System visually highlights elements on the preview that map to schema fields
+
+### 4. Testing and Validation
+
+1. User can run a test extraction based on current configuration
+2. System displays:
+   - Raw extracted data
+   - Data formatted according to schema
+   - Any validation errors or warnings
+
+3. User can refine selectors or schema based on results
+
+### 5. Advanced Options
+
+1. Data transformation options:
+   - Text cleanup (trim, regex, replace)
+   - Type conversion (parse dates, numbers)
+   - Conditional logic
+
+2. Pagination handling:
+   - Define "next page" selector
+   - Set maximum pages to scrape
+   - Configure aggregation method for multi-page results
+
+### 6. Save and Deploy
+
+1. User saves the configuration
+2. System validates the complete setup
+3. User can:
+   - Run the scraper immediately
+   - Schedule recurring scrapes
+   - Deploy as an API endpoint
+
+## Schema Builder Interface Components
+
+### Field Definition Panel
+
+- Field name input
+- Type selector dropdown
+- Required/Optional toggle
+- Description text area
+- "Add Field" button
+- "Add Nested Field" button (for objects)
+- "Define Items" button (for arrays)
+
+### Visual Mapping Area
+
+- Website preview window
+- Element inspector tool
+- Selector input field with validation
+- Extraction method options:
+  - `text` (default): Extract text content
+  - `html`: Extract HTML content
+  - `attr:name`: Extract specific attribute
+
+### Mapped Schema Visualization
+
+- Interactive JSON schema representation
+- Color-coded fields based on mapping status
+- Visual indicators for required fields
+- Expand/collapse controls for nested objects
+
+### Testing Panel
+
+- "Test Extraction" button
+- Raw results view
+- Formatted results view
+- Validation feedback
+- Performance metrics
+
+## Example Usage Scenario
+
+1. User wants to scrape product information from an e-commerce site
+2. User defines a schema with:
+   - Product name (string)
+   - Price (number)
+   - Description (string)
+   - Specifications (object)
+   - Reviews (array of objects)
+
+3. User maps:
+   - Product name to `.product-title` selector
+   - Price to `.product-price` selector with text transformation
+   - Description to `.product-description p` selector
+   - Specifications to key-value pairs in `.specs-table`
+   - Reviews to items in `.review-list`
+
+4. User tests extraction and refines selectors
+5. User adds data transformations:
+   - Strip currency symbol from price
+   - Parse price as number
+   - Format dates in ISO format
+
+6. User saves configuration and schedules daily scrapes
+
+## Technical Implementation Notes
+
+- Use React with TypeScript for the frontend
+- Implement a visual selector builder component
+- Create a real-time schema validator
+- Use CSS-in-JS for highlighting selected elements
+- Implement a sandboxed preview iframe for website rendering
+- Consider using a library like `json-schema-editor-visual` or building a custom solution
