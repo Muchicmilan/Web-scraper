@@ -3,9 +3,13 @@ import dotenv from "dotenv";
 dotenv.config();
 export const connectDB = async () => {
     try {
-        await mongoose.connect("mongodb://admin:password@localhost:27017/", {
-            authSource: "admin",
-        });
+        const mongoURI = process.env.MONGO_URI || "mongodb://localhost:27017/scraper";
+        const options = {
+            authSource: process.env.AUTH_SOURCE || "admin",
+            user: process.env.MONGO_USER,
+            pass: process.env.MONGO_PASSWORD
+        };
+        await mongoose.connect(mongoURI, options);
         console.log("Database Connected");
     }
     catch (error) {

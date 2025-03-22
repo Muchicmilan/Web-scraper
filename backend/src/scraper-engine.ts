@@ -31,15 +31,15 @@ export async function scrapeWebsite(url: string): Promise<any | null> {
                     .get()
                     .join(" "); 
                 
-                const link = section
+                const links = section
                 .find("a")
                 .map((_, a) => ({
                     text: cheerioRead(a).text().trim(),
                     url : cheerioRead(a).attr("href") || "",
                 }))
                 .get();
-                if (heading || content || link) {
-                    return { heading, content, link };
+                if (heading || content || links.length) {
+                    return { heading, content, links };
                 }
                 return null;
             })

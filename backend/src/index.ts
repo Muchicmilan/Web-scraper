@@ -1,4 +1,4 @@
-import express, { Application, Request, Response } from "express";
+import express, {Application, Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { scrapeWebsite } from "./scraper-engine.js";
@@ -30,9 +30,8 @@ app.post("/api/scrape", async (req: Request, res: any) => {
     }
     
     const newScrapedData = new ScrapedData(scrapedData);
-    console.log(newScrapedData);
-    //await newScrapedData.save();
-    //res.json(newScrapedData);
+    await newScrapedData.save();
+    res.json({ success: true, data: newScrapedData });
 
   } catch (error) {
     console.error("Scraping Error:", error);

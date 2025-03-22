@@ -24,15 +24,15 @@ export async function scrapeWebsite(url) {
                 .map((_, p) => cheerioRead(p).text().trim())
                 .get()
                 .join(" ");
-            const link = section
+            const links = section
                 .find("a")
                 .map((_, a) => ({
                 text: cheerioRead(a).text().trim(),
                 url: cheerioRead(a).attr("href") || "",
             }))
                 .get();
-            if (heading || content || link) {
-                return { heading, content, link };
+            if (heading || content || links) {
+                return { heading, content, links };
             }
             return null;
         })
