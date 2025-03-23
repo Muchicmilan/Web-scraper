@@ -16,14 +16,14 @@ app.use(express.json());
 connectDB();
 
 app.post("/api/scrape", async (req: Request, res: any) => {
-  const { url } = req.body;
+  const { url, options } = req.body;
 
   if (!url) {
     return res.status(400).json({ error: "URL is required" });
   }
 
   try {
-    const scrapedData = await scrapeWebsite(url);
+    const scrapedData = await scrapeWebsite(url, options || {});
 
     if (!scrapedData) {
       return res.status(500).json({ error: "Failed to scrape website" });

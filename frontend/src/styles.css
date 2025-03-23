@@ -1,0 +1,137 @@
+.scraper-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+  }
+  
+  .scraper-title {
+    color: #333;
+    margin-bottom: 20px;
+  }
+  
+  .url-input-container {
+    margin-bottom: 20px;
+    display: flex;
+  }
+  
+  .url-input {
+    width: 70%;
+    padding: 8px;
+    margin-right: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  .submit-button {
+    padding: 8px 16px;
+    background-color: #4285f4;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .submit-button:hover {
+    background-color: #3367d6;
+  }
+  
+  .submit-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+  
+  .options-toggle {
+    background: none;
+    border: none;
+    color: #4285f4;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+    margin-bottom: 20px;
+  }
+  
+  .advanced-options {
+    border: 1px solid #ccc;
+    padding: 15px;
+    margin-bottom: 20px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+  }
+  
+  .advanced-options h3 {
+    margin-top: 0;
+    color: #333;
+  }
+  
+  .option-row {
+    margin-bottom: 10px;
+  }
+  
+  .option-label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+  }
+  
+  .option-input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+  
+  .number-input {
+    width: 100px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+  
+  .results-container {
+    margin-top: 20px;
+  }
+  
+  .results-title {
+    color: #333;
+  }
+  
+  .results-content {
+    border: 1px solid #ccc;
+    padding: 15px;
+    max-height: 400px;
+    overflow: auto;
+    background-color: white;
+    border-radius: 4px;
+  }
+  
+  .results-url {
+    word-break: break-all;
+  }
+  
+  .section-card {
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    background-color: #fafafa;
+  }
+  
+  .section-heading {
+    margin-top: 0;
+    color: #333;
+  }
+  
+  .section-content {
+    color: #555;
+  }
+  
+  .links-list {
+    list-style-type: none;
+    padding-left: 10px;
+    margin: 5px 0;
+  }
+  
+  .links-list li {
+    margin-bottom: 3px;
+  }
