@@ -30,6 +30,7 @@ app.post("/api/scrape", async (req: Request, res: any) => {
     }
     
     const newScrapedData = new ScrapedData(scrapedData);
+    console.log(newScrapedData);
     await newScrapedData.save();
     res.json({ success: true, data: newScrapedData });
 

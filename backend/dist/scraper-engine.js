@@ -31,7 +31,7 @@ export async function scrapeWebsite(url) {
                 url: cheerioRead(a).attr("href") || "",
             }))
                 .get();
-            if (heading || content || links) {
+            if (heading || content || links.length) {
                 return { heading, content, links };
             }
             return null;
