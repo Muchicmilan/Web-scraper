@@ -1,16 +1,20 @@
 import mongoose from "mongoose";
-
+//TODO dodati images
 const scrapedDataSchema = new mongoose.Schema({
-    url: { type: String, required: true },
-    title: String,
-    sections: [
+  url: { type: String, required: true, unique: true },
+  title: String,
+  sections: [
+    {
+      heading: { type: String },
+      content: { type: String, default: "" },
+      links: [
         {
-            heading: { type: String },
-            content: { type: String, default: "" },
-            linkTexts: { type: [String], default: [] },
-            linkUrls: { type: [String], default: [] }
+          text: String,
+          url: String,
         },
-    ],
+      ],
+    },
+  ],
 });
 
 export const ScrapedData = mongoose.model("ScrapedData", scrapedDataSchema);

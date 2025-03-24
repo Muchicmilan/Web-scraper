@@ -1,22 +1,17 @@
-import mongoose, { ConnectOptions } from "mongoose";
+import mongoose from "mongoose";
 import dotenv from "dotenv";
-
+//TODO popraviti .env
 dotenv.config();
 
 export const connectDB = async () => {
   try {
-    const mongoURI = process.env.MONGO_URI || "mongodb://root:rootpassword@localhost:27017/scraper?authSource=admin";
+    console.log(process.env.MONGO_URI)
+    const mongoURI = process.env.MONGO_URI || "mongodb://root:rootpassword@localhost:27017/";
 
-    const options: ConnectOptions = {
-      user: "root",
-      pass: "rootpassword",
-      dbName: "scraper",
-    };
-
-    await mongoose.connect(mongoURI, options);
-    console.log("✅ Database Connected Successfully");
+    await mongoose.connect(mongoURI);
+    console.log("Database Connected Successfully");
   } catch (error) {
-    console.error("❌ Connection error: ", error);
+    console.error("Connection error: ", error);
     process.exit(1);
   }
 };

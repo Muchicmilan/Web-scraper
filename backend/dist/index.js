@@ -10,6 +10,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 connectDB();
+//TODO popraviti res da bude Response
 app.post("/api/scrape", async (req, res) => {
     const { url, options } = req.body;
     if (!url) {
@@ -20,13 +21,19 @@ app.post("/api/scrape", async (req, res) => {
         if (!scrapedData) {
             return res.status(500).json({ error: "Failed to scrape website" });
         }
-        //const transformedData = transformScrapedData(scrapedData);
+        const existingData = await ScrapedData.findOne({ url: scrapedData.url });
+        if (existingData) {
+            return res.status(409).json({ message: "Data for this URL already exists" });
+        }
         const dataForStoring = new ScrapedData(scrapedData);
         await dataForStoring.save();
-        res.json({ success: true, data: dataForStoring });
+        res.status(201).json({ success: true, data: dataForStoring });
     }
     catch (error) {
         console.error("Scraping Error:", error);
+        if (error.code === 11000) { //mongoDB duplicate data error
+            return res.status(409).json({ error: "Duplicate URL: This URL has already been scraped and is stored in the database" });
+        }
         return res.status(500).json({ error: "Internal Server Error" });
     }
 });
