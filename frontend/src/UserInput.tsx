@@ -21,7 +21,7 @@ const UserInput: React.FC = () => {
       headingSelectors: [],
       contentSelectors: [],
       excludeSelectors: [],
-      minContentLength: 50
+      minContentLength: 500
     });
     const [results, setResults] = useState<any>(null);
     const [loading, setLoading] = useState<boolean>(false);

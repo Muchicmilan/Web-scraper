@@ -22,14 +22,12 @@ export async function scrapeWebsite(url: string, options: ScrapeOptions = {}): P
         
         const title = cheerioRead("title").text();
         
-        // Default selectors if none provided
         const contentSelector = options.contentSelector || "article, section, main, .content, .article, .post";
         const headingSelectors = options.headingSelectors || ["h1", "h2", "h3", "h4"];
         const contentSelectors = options.contentSelectors || ["p, span"];
         const excludeSelectors = options.excludeSelectors || [".sidebar", ".comment", ".footer", ".nav", ".advertisement"];
-        const minContentLength = options.minContentLength || 50;
+        const minContentLength = options.minContentLength || 500;
         
-        // Remove elements that should be excluded
         excludeSelectors.forEach(selector => {
             cheerioRead(selector).remove();
         });
@@ -54,25 +52,28 @@ export async function scrapeWebsite(url: string, options: ScrapeOptions = {}): P
                 
                 const content = contentParts.join(" ");
                
+
                 const links = section
-                    .find("a")
-                    .map((_, a) => {
-                        const link = cheerioRead(a);
-                        const text = link.text().trim();
-                        const href = link.attr("href") || "";
-                        
-                        
-                        if (!text || !href || href === "#" || href.startsWith("javascript:")) {
-                            return null;
-                        }
-                        
-                        return { text, url: href };
-                    })
-                    .get()
-                    .filter(Boolean);
+                .find("a")
+                .map((_, a) => {
+                    const link = cheerioRead(a);
+                    const text = link.text().trim();
+                    const href = link.attr("href") || "";
+                    
+                    if (!text || !href || href === "#" || href.startsWith("javascript:")) {
+                        return null;
+                    }
+                    
+                    return { text, url: href };
+                })
+                .get()
+                .filter(Boolean);
+
+                const linkTexts = links.map(link => link.text);
+                const linkUrls = links.map(link => link.url);
                 
                 if (heading && content.length >= minContentLength) {
-                    return { heading, content, links };
+                    return { heading, content, links, linkTexts, linkUrls };
                 }
                 
                 return null;

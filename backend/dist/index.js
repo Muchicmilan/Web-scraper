@@ -20,10 +20,10 @@ app.post("/api/scrape", async (req, res) => {
         if (!scrapedData) {
             return res.status(500).json({ error: "Failed to scrape website" });
         }
-        const newScrapedData = new ScrapedData(scrapedData);
-        console.log(newScrapedData);
-        await newScrapedData.save();
-        res.json({ success: true, data: newScrapedData });
+        //const transformedData = transformScrapedData(scrapedData);
+        const dataForStoring = new ScrapedData(scrapedData);
+        await dataForStoring.save();
+        res.json({ success: true, data: dataForStoring });
     }
     catch (error) {
         console.error("Scraping Error:", error);

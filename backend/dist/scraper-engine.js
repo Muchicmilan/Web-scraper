@@ -11,13 +11,11 @@ export async function scrapeWebsite(url, options = {}) {
         const { data } = await axios.get(url);
         const cheerioRead = cheerio.load(data);
         const title = cheerioRead("title").text();
-        // Default selectors if none provided
         const contentSelector = options.contentSelector || "article, section, main, .content, .article, .post";
         const headingSelectors = options.headingSelectors || ["h1", "h2", "h3", "h4"];
         const contentSelectors = options.contentSelectors || ["p, span"];
         const excludeSelectors = options.excludeSelectors || [".sidebar", ".comment", ".footer", ".nav", ".advertisement"];
-        const minContentLength = options.minContentLength || 50;
-        // Remove elements that should be excluded
+        const minContentLength = options.minContentLength || 500;
         excludeSelectors.forEach(selector => {
             cheerioRead(selector).remove();
         });
@@ -52,8 +50,10 @@ export async function scrapeWebsite(url, options = {}) {
             })
                 .get()
                 .filter(Boolean);
+            const linkTexts = links.map(link => link.text);
+            const linkUrls = links.map(link => link.url);
             if (heading && content.length >= minContentLength) {
-                return { heading, content, links };
+                return { heading, content, links, linkTexts, linkUrls };
             }
             return null;
         })

@@ -5,8 +5,9 @@ const scrapedDataSchema = new mongoose.Schema({
     sections: [
         {
             heading: { type: String },
-            content: { type: String },
-            links: [{ text: String, url: String }],
+            content: { type: String, default: "" },
+            linkTexts: { type: [String], default: [] },
+            linkUrls: { type: [String], default: [] }
         },
     ],
 });
