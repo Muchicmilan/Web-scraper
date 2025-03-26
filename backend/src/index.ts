@@ -1,9 +1,8 @@
-import express, {Application, Request, Response } from "express";
+import express, {Application} from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { scrapeWebsite } from "./scraper-engine.js";
-import { ScrapedData } from "./models/ScrapedData.js";
 import { connectDB } from "./database.js"
+import scrapeEngineRouter from "./scraper-engine/scraper-engine-controller.js";
 
 dotenv.config();
 
@@ -14,39 +13,10 @@ app.use(cors());
 app.use(express.json());
 
 connectDB();
-//TODO popraviti res da bude Response
-app.post("/api/scrape", async (req: Request, res: any) => {
-  const { url, options } = req.body;
 
-  if (!url) {
-    return res.status(400).json({ error: "URL is required" });
-  }
+app.use("/api", scrapeEngineRouter);
 
-  try {
-    const scrapedData = await scrapeWebsite(url, options || {});
+app.listen(PORT, ()=>{
+    console.log(`server is listening on port ${PORT}`);
+})
 
-    if (!scrapedData) {
-      return res.status(500).json({ error: "Failed to scrape website" });
-    }
-
-    const existingData = await ScrapedData.findOne({url : scrapedData.url});
-    if (existingData){
-      return res.status(409).json({message: "Data for this URL already exists"});
-    }
-
-    const dataForStoring = new ScrapedData(scrapedData);
-    await dataForStoring.save();
-    res.status(201).json({success: true, data: dataForStoring});
-
-  } catch (error: any) {
-      console.error("Scraping Error:", error);
-      if (error.code === 11000) { //mongoDB duplicate data error
-        return res.status(409).json({error: "Duplicate URL: This URL has already been scraped and is stored in the database"})   
-    }
-      return res.status(500).json({ error: "Internal Server Error" });
-  }
-});
-
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});

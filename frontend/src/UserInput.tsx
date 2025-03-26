@@ -1,109 +1,80 @@
 import React, { useState } from "react";
-import axios from "axios";
 import ScraperForm from "./components/ScraperForm";
 import AdvancedOptions from "./components/AdvancedOptions";
 import ResultsDisplay from "./components/ResultDisplay";
-import { ScrapeOptions, ScrapedData } from "./Types";
+import { useScraper } from "./hooks/useScraper"; 
+import { ScrapeOptions } from "./Types";
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 const UserInput: React.FC = () => {
-  const [input, setInput] = useState<string>("");
-  const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
-  const [options, setOptions] = useState<ScrapeOptions>({
-    contentSelector: "",
-    headingSelectors: [],
-    contentSelectors: [],
-    excludeSelectors: [],
-    minContentLength: 100,
-  });
-  const [results, setResults] = useState<{ success: boolean; data: ScrapedData } | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+    const [input, setInput] = useState<string>("");
+    const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
+    const [options, setOptions] = useState<ScrapeOptions>({
+        contentSelector: "",
+        headingSelectors: [],
+        contentSelectors: [],
+        excludeSelectors: [],
+        minContentLength: 100,
+    });
 
-  const handleSubmit = async () => {
-    if (!input.trim()) return;
+    const { results, error, loading, scrapeUrl } = useScraper(`${API_BASE_URL}/api/scrape`);
 
-    setLoading(true);
-    setError(null);
-    setResults(null); 
-    try {
-      const cleanOptions: ScrapeOptions = {};
+    const handleSubmit = () => {
+         let optionsToSend: Partial<ScrapeOptions> | undefined = undefined;
+         if (showAdvanced) {
+             const cleanOptions: Partial<ScrapeOptions> = {};
+             if (options.contentSelector?.trim()) cleanOptions.contentSelector = options.contentSelector.trim();
+             const fHeadings = options.headingSelectors?.map(s => s.trim()).filter(Boolean);
+             if (fHeadings?.length) cleanOptions.headingSelectors = fHeadings;
+             const fContent = options.contentSelectors?.map(s => s.trim()).filter(Boolean);
+             if (fContent?.length) cleanOptions.contentSelectors = fContent;
+             const fExclude = options.excludeSelectors?.map(s => s.trim()).filter(Boolean);
+             if (fExclude?.length) cleanOptions.excludeSelectors = fExclude;
+             if (options.minContentLength !== undefined && options.minContentLength !== 100) {
+                cleanOptions.minContentLength = Math.max(0, options.minContentLength);
+             }
+             if (Object.keys(cleanOptions).length > 0) {
+                 optionsToSend = cleanOptions;
+             }
+         }
 
-      if (options.contentSelector)
-        cleanOptions.contentSelector = options.contentSelector;
-      if (options.headingSelectors?.length)
-        cleanOptions.headingSelectors = options.headingSelectors.filter(Boolean);
-      if (options.contentSelectors?.length)
-        cleanOptions.contentSelectors = options.contentSelectors.filter(Boolean);
-      if (options.excludeSelectors?.length)
-        cleanOptions.excludeSelectors = options.excludeSelectors.filter(Boolean);
-      if (options.minContentLength)
-        cleanOptions.minContentLength = options.minContentLength;
+        scrapeUrl(input, optionsToSend);
+    };
 
-      const payload = showAdvanced
-        ? { url: input, options: cleanOptions }
-        : { url: input };
+    const handleOptionsChange = (newOptions: ScrapeOptions) => {
+        setOptions(newOptions);
+    };
 
-      const response = await axios.post(
-        "http://localhost:5000/api/scrape",
-        payload
-      );
+    return (
+        <div className="scraper-container">
+            <h1 className="scraper-title">Web Scraper</h1>
 
-        if (response.status === 201){
-            setResults(response.data);
-        } else if (response.status === 409) {
-            setError("This URL has already been scraped."); // Set the error state.
-            console.error("Duplicate URL:", response.data);
-        }
+            <ScraperForm
+                input={input}
+                setInput={setInput}
+                handleSubmit={handleSubmit}
+                loading={loading} // Use loading state from hook
+                showAdvanced={showAdvanced}
+                setShowAdvanced={setShowAdvanced}
+            />
 
-    } catch (err: any) {
-        console.error("Error: ", err);
+            {showAdvanced && (
+                <AdvancedOptions options={options} onOptionsChange={handleOptionsChange} />
+            )}
 
-        if (axios.isAxiosError(err)) {
-            if (err.response) {
-                  if(err.response.status === 409){
-                    setError(err.response.data.message || "This URL has already been scraped");
-                  } else {
-                    setError(`Server Error: ${err.response.status} - ${err.response.data.error || err.response.data}`);
-                }
-            } else if (err.request) {
-                setError("No response received from server.  Please check your network connection.");
-            } else {
-                setError("An unexpected error occurred: " + err.message);
-            }
-        } else {
-            setError("An unexpected error occurred: " + err.message);
-        }
-        setResults(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+            {loading && <div className="loading-indicator">Scraping...</div>}
 
-  const handleOptionsChange = (newOptions: ScrapeOptions) => {
-    setOptions(newOptions);
-  };
+            {!loading && error && <ResultsDisplay results={null} error={error} />}
+            {!loading && !error && results && <ResultsDisplay results={results} />}
 
-  return (
-    <div className="scraper-container">
-      <h1 className="scraper-title">Web Scraper</h1>
-
-      <ScraperForm
-        input={input}
-        setInput={setInput}
-        handleSubmit={handleSubmit}
-        loading={loading}
-        showAdvanced={showAdvanced}
-        setShowAdvanced={setShowAdvanced}
-      />
-
-      {showAdvanced && (
-        <AdvancedOptions options={options} onOptionsChange={handleOptionsChange} />
-      )}
-
-      {error && <ResultsDisplay results={null} error={error} />}
-      {results && <ResultsDisplay results={results} />}
-    </div>
-  );
+            {!loading && !error && !results && (
+                <div className="results-container initial-message">
+                    Enter a URL to start scraping.
+                </div>
+            )}
+        </div>
+    );
 };
 
 export default UserInput;

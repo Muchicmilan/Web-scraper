@@ -1,111 +1,112 @@
 import React from "react";
-import { ScrapeOptions } from "../Types";
+import { ScrapeOptions } from "../Types"; // Adjust path if needed
 
 interface AdvancedOptionsProps {
-  options: ScrapeOptions;
-  onOptionsChange: (options: ScrapeOptions) => void;
+    options: ScrapeOptions;
+    onOptionsChange: (options: ScrapeOptions) => void;
 }
 
 const AdvancedOptions: React.FC<AdvancedOptionsProps> = ({
-  options,
-  onOptionsChange,
+    options,
+    onOptionsChange,
 }) => {
-  return (
-    <div className="advanced-options">
-      <h3>Advanced Scraping Options</h3>
+    const handleArrayInputChange = (
+        field: keyof Pick<ScrapeOptions, 'headingSelectors' | 'contentSelectors' | 'excludeSelectors'>,
+        value: string
+    ) => {
+        const arrayValue = value.split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+        onOptionsChange({ ...options, [field]: arrayValue });
+    };
 
-      <div className="option-row">
-        <label className="option-label">
-          Content Container Selector (e.g., "article, .content"):
-        </label>
-        <input
-          type="text"
-          value={options.contentSelector || ""}
-          onChange={(e) =>
-            onOptionsChange({ ...options, contentSelector: e.target.value })
-          }
-          className="option-input"
-        />
-      </div>
+    return (
+        <div className="advanced-options">
+            <h3>Advanced Scraping Options</h3>
+            <p className="options-helper-text">
+                Specify CSS selectors. Leave blank for defaults. Use commas for multiple.
+            </p>
 
-      <div className="option-row">
-        <label className="option-label">
-          Heading Selectors (comma separated, e.g., "h1, h2"):
-        </label>
-        <input
-          type="text"
-          value={options.headingSelectors?.join(", ") || ""}
-          onChange={(e) =>
-            onOptionsChange({
-              ...options,
-              headingSelectors: e.target.value
-                .split(",")
-                .map((s) => s.trim())
-                .filter(Boolean),
-            })
-          }
-          className="option-input"
-        />
-      </div>
+            <div className="option-row">
+                <label htmlFor="contentSelector" className="option-label">
+                    Content Container(s):
+                </label>
+                <input
+                    id="contentSelector"
+                    type="text"
+                    placeholder="article, .post-content, main"
+                    value={options.contentSelector || ""}
+                    onChange={(e) =>
+                        onOptionsChange({ ...options, contentSelector: e.target.value })
+                    }
+                    className="option-input"
+                />
+            </div>
 
-      <div className="option-row">
-        <label className="option-label">
-          Content Selectors (comma separated, e.g., "p, .text"):
-        </label>
-        <input
-          type="text"
-          value={options.contentSelectors?.join(", ") || ""}
-          onChange={(e) =>
-            onOptionsChange({
-              ...options,
-              contentSelectors: e.target.value
-                .split(",")
-                .map((s) => s.trim())
-                .filter(Boolean),
-            })
-          }
-          className="option-input"
-        />
-      </div>
+            <div className="option-row">
+                <label htmlFor="headingSelectors" className="option-label">
+                    Heading Selector(s):
+                </label>
+                <input
+                    id="headingSelectors"
+                    type="text"
+                    placeholder="h1, h2, .section-title"
+                    value={options.headingSelectors?.join(", ") ?? ""}
+                    onChange={(e) => handleArrayInputChange('headingSelectors', e.target.value)}
+                    className="option-input"
+                />
+            </div>
 
-      <div className="option-row">
-        <label className="option-label">
-          Exclude Selectors (comma separated, e.g., ".sidebar, .footer"):
-        </label>
-        <input
-          type="text"
-          value={options.excludeSelectors?.join(", ") || ""}
-          onChange={(e) =>
-            onOptionsChange({
-              ...options,
-              excludeSelectors: e.target.value
-                .split(",")
-                .map((s) => s.trim())
-                .filter(Boolean),
-            })
-          }
-          className="option-input"
-        />
-      </div>
+            <div className="option-row">
+                <label htmlFor="contentSelectors" className="option-label">
+                    Text Element Selector(s):
+                </label>
+                <input
+                    id="contentSelectors"
+                    type="text"
+                    placeholder="p, li, .text-block (less common)"
+                    value={options.contentSelectors?.join(", ") ?? ""}
+                    onChange={(e) => handleArrayInputChange('contentSelectors', e.target.value)}
+                    className="option-input"
+                />
+            </div>
 
-      <div className="option-row">
-        <label className="option-label">
-          Minimum Content Length (characters):
-        </label>
-        <input
-          type="number"
-          value={options.minContentLength || 0}
-          onChange={(e) =>
-            onOptionsChange({
-              ...options,
-              minContentLength: parseInt(e.target.value, 10) || 0,
-            })
-          }
-          className="number-input"
-        />
-      </div>
-    </div>
-  );
+            <div className="option-row">
+                <label htmlFor="excludeSelectors" className="option-label">
+                    Exclude Element Selector(s):
+                </label>
+                <input
+                    id="excludeSelectors"
+                    type="text"
+                    placeholder=".sidebar, .ad-banner, footer"
+                    value={options.excludeSelectors?.join(", ") ?? ""}
+                    onChange={(e) => handleArrayInputChange('excludeSelectors', e.target.value)}
+                    className="option-input"
+                />
+            </div>
+
+            <div className="option-row">
+                <label htmlFor="minContentLength" className="option-label">
+                    Min. Section Length:
+                </label>
+                <input
+                    id="minContentLength"
+                    type="number"
+                    min="0" 
+                    value={options.minContentLength ?? 100}
+                    onChange={(e) =>
+                        onOptionsChange({
+                            ...options,
+                            minContentLength: Math.max(0, parseInt(e.target.value, 10) || 0),
+                        })
+                    }
+                    className="number-input"
+                    style={{maxWidth: '100px'}} 
+                />
+                 <span className="input-unit-label">characters</span>
+            </div>
+        </div>
+    );
 };
 
 export default AdvancedOptions;

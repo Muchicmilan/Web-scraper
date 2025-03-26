@@ -1,88 +1,67 @@
 import React from "react";
-import { ScrapedData } from "../Types"; // Import from types.ts
+import { ScrapeSuccessResponse, ScrapedData } from "../Types";
 
 interface ResultsDisplayProps {
-  results: { success: boolean; data: ScrapedData } | null;
-  error?: string;
+    results: ScrapeSuccessResponse | null;
+    error?: string | null;
 }
 
+const formatDate = (dateString: string | undefined): string => {
+    if (!dateString) return 'N/A';
+    try {
+        return new Date(dateString).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+    } catch (e) { return dateString; }
+};
+
 const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, error }) => {
-  if (error) {
-    return (
-      <div className="results-container">
-        <h2 className="results-title">Error</h2>
-        <p className="error-message">{error}</p>
-      </div>
-    );
-  }
+    if (error) {
+        return ( <div className="results-container"><p className="error-message">{error}</p></div> );
+    }
+    if (!results) { return null; }
 
-  if (!results) {
-    return (
-      <div className="results-container">
-        <h2 className="results-title">No Results Yet</h2>
-        <p>Enter a URL and click "Submit" to see results.</p>
-      </div>
-    );
-  }
+    const data: ScrapedData = results.data;
 
-    if (!results.success) {
     return (
         <div className="results-container">
-            <h2 className="results-title">Scraping Failed</h2>
-            <p>An error occurred while scraping the website.</p>
+            <h2 className="results-title">Scraping Results</h2>
+            <div className="results-content">
+                <h3 className="results-heading">{data.title || "Untitled Page"}</h3>
+                <p className="results-url">
+                    <strong>URL:</strong>{' '}
+                    <a href={data.url} target="_blank" rel="noopener noreferrer">{data.url}</a>
+                </p>
+                <div className="results-meta">
+                    <span>Scraped: {formatDate(data.scrapedAt)}</span> | {' '}
+                    <span>DB Created: {formatDate(data.createdAt)}</span> | {' '}
+                    <span>DB Updated: {formatDate(data.updatedAt)}</span>
+                </div>
+                <p className="results-section-count">
+                    <strong>Sections Found:</strong> {data.sections.length}
+                </p>
+                {data.sections.length > 0 ? (
+                    data.sections.map((section, index) => (
+                        <div key={section._id || `section-${index}`} className="section-card">
+                            {section.heading && section.heading.trim() && ( <h4 className="section-heading">{section.heading}</h4> )}
+                            {section.content && ( <p className="section-content">{section.content.substring(0, 250)}{section.content.length > 250 ? '...' : ''}</p> )}
+                            {section.links && section.links.length > 0 ? (
+                                <div>
+                                    <strong>Links ({section.links.length}):</strong>
+                                    <ul className="links-list">
+                                         {section.links.slice(0, 5).map((link, i) => ( <li key={link.url || `link-${i}`}> </li> ))}
+                                         {section.links.length > 5 && ( <li>...and {section.links.length - 5} more link(s)</li> )}
+                                    </ul>
+                                </div>
+                             ) : (
+                                section.content && <p className="section-no-links">No links found in this section.</p>
+                             )}
+                        </div>
+                    ))
+                ) : (
+                     <p className="no-sections-message">No content sections meeting the criteria were found on this page.</p>
+                )}
+            </div>
         </div>
-    )
-  }
-
-  return (
-    <div className="results-container">
-      <h2 className="results-title">Scraping Results</h2>
-      <div className="results-content">
-        <h3 className="results-heading">{results.data.title}</h3>
-        <p className="results-url">
-          <strong>URL:</strong>{" "}
-          <a href={results.data.url} target="_blank" rel="noopener noreferrer">
-            {results.data.url}
-          </a>
-        </p>
-        <p className="results-section-count">
-          <strong>Sections:</strong> {results.data.sections.length}
-        </p>
-
-        {results.data.sections.map((section, index) => (
-          <div key={index} className="section-card">
-            {section.heading && (
-              <h4 className="section-heading">{section.heading}</h4>
-            )}
-            {section.content && (
-              <p className="section-content">
-                {section.content.substring(0, 150)}...
-              </p>
-            )}
-
-            {section.links && section.links.length > 0 && (
-              <div>
-                <strong>Links ({section.links.length}):</strong>
-                <ul className="links-list">
-                  {section.links.slice(0, 3).map((link, i) => (
-                    <li key={i}>
-                      {link.text}:{" "}
-                      <a href={link.url} target="_blank" rel="noopener noreferrer">
-                        {link.url}
-                      </a>
-                    </li>
-                  ))}
-                  {section.links.length > 3 && (
-                    <li>...and {section.links.length - 3} more</li>
-                  )}
-                </ul>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+    );
 };
 
 export default ResultsDisplay;
