@@ -1,14 +1,14 @@
-import mongoose from "mongoose";
 import dotenv from "dotenv";
-//TODO popraviti .env
 dotenv.config();
+import mongoose from "mongoose";
+
 
 export const connectDB = async () => {
   try {
     console.log(process.env.MONGO_URI)
-    const mongoURI = process.env.MONGO_URI || "mongodb://root:rootpassword@localhost:27017/";
+    const mongoURI = process.env.MONGO_URI
 
-    await mongoose.connect(mongoURI);
+    await mongoose.connect(mongoURI as string);
     console.log("Database Connected Successfully");
   } catch (error) {
     console.error("Connection error: ", error);

@@ -7,6 +7,8 @@ interface ScraperFormProps {
     loading: boolean;
     showAdvanced: boolean;
     setShowAdvanced: (value: boolean) => void;
+    scrapeLinkedPages: boolean;        
+    setScrapeLinkedPages: (value: boolean) => void; 
 }
 
 const ScraperForm: React.FC<ScraperFormProps> = ({
@@ -16,6 +18,8 @@ const ScraperForm: React.FC<ScraperFormProps> = ({
     loading,
     showAdvanced,
     setShowAdvanced,
+    scrapeLinkedPages,      
+    setScrapeLinkedPages      
 }) => {
 
     const onSubmit = (e: React.FormEvent) => {
@@ -24,24 +28,23 @@ const ScraperForm: React.FC<ScraperFormProps> = ({
     };
 
     return (
-
         <form onSubmit={onSubmit}>
             <div className="url-input-container">
                 <input
-                    type="url" 
+                    type="url"
                     placeholder="Enter website URL (e.g., https://example.com)"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     className="url-input"
-                    required 
-                    disabled={loading} 
+                    required
+                    disabled={loading}
                     aria-label="Website URL Input"
                 />
                 <button
                     type="submit"
                     className="submit-button"
-                    disabled={loading || !input.trim()} 
-                    aria-live="polite" 
+                    disabled={loading || !input.trim()}
+                    aria-live="polite"
                 >
                     {loading ? "Scraping..." : "Submit"}
                 </button>
@@ -57,6 +60,25 @@ const ScraperForm: React.FC<ScraperFormProps> = ({
                 >
                     {showAdvanced ? "Hide Advanced Options" : "Show Advanced Options"}
                 </button>
+            </div>
+
+             <div className="form-toggle-container" style={{ marginTop: '10px', display: 'flex', alignItems: 'center' }}> {/* Basic styling */}
+                <input
+                    type="checkbox"
+                    id="scrapeLinkedPagesCheckbox"
+                    checked={scrapeLinkedPages}
+                    onChange={(e) => setScrapeLinkedPages(e.target.checked)}
+                    disabled={loading}
+                    style={{ marginRight: '8px', cursor: loading ? 'not-allowed' : 'pointer' }}
+                    aria-describedby="scrapeLinkedPagesLabel"
+                />
+                <label
+                    htmlFor="scrapeLinkedPagesCheckbox"
+                    id="scrapeLinkedPagesLabel"
+                    style={{ cursor: loading ? 'not-allowed' : 'pointer', userSelect: 'none' }}
+                >
+                    Scrape Same-Domain Links Found on Page? (Sequential)
+                </label>
             </div>
         </form>
     );

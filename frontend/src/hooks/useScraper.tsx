@@ -1,20 +1,27 @@
 import { useState } from 'react';
 import axios, { AxiosError } from 'axios';
-import { ScrapeOptions, ScrapeSuccessResponse, ScrapeErrorResponse } from '../Types';
+import { 
+    ScrapeSuccessResponse,
+    ScrapeErrorResponse,
+    ScrapeMultiSuccessResponse,
+    ScrapeRequestBodyOptions
+    } from '../Types';
+
+type ScraperResults = ScrapeSuccessResponse | ScrapeMultiSuccessResponse | null;
 
 interface UseScraperReturn {
-    results: ScrapeSuccessResponse | null;
+    results: ScraperResults
     error: string | null;
     loading: boolean;
-    scrapeUrl: (url: string, options?: Partial<ScrapeOptions>) => Promise<void>;
+    scrapeUrl: (url: string, options?: ScrapeRequestBodyOptions) => Promise<void>;
 }
 
 export const useScraper = (apiUrl: string): UseScraperReturn => {
-    const [results, setResults] = useState<ScrapeSuccessResponse | null>(null);
+    const [results, setResults] = useState<ScraperResults>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
 
-    const scrapeUrl = async (url: string, options?: Partial<ScrapeOptions>): Promise<void> => {
+    const scrapeUrl = async (url: string, options?: ScrapeRequestBodyOptions): Promise<void> => {
         if (!url.trim()) {
             setError("URL cannot be empty.");
             return;
@@ -37,11 +44,11 @@ export const useScraper = (apiUrl: string): UseScraperReturn => {
 
             console.log("Sending request to:", apiUrl, "Payload:", payload);
 
-            const response = await axios.post<ScrapeSuccessResponse>(apiUrl, payload);
+            const response = await axios.post<ScrapeSuccessResponse | ScrapeMultiSuccessResponse>(apiUrl, payload);
 
             console.log("Received response Status:", response.status, "Data:", response.data);
 
-            if (response.status === 201 && response.data.success) {
+            if ((response.status === 200 || response.status === 201) && response.data.success) {
                 setResults(response.data);
             } else {
                 setError(`Received unexpected success response status: ${response.status}`);

@@ -4,11 +4,7 @@ export interface ScrapeOptions {
   contentSelectors?: string[];
   excludeSelectors?: string[];
   minContentLength?: number;
-}
-
-export interface ScrapedLink {
-  text: string;
-  url: string;
+  scrapeLinkedPages?: boolean;
 }
 
 
@@ -16,7 +12,6 @@ export interface ScrapedSection {
   _id?: string; 
   heading: string | null;
   content: string;
-  links: ScrapedLink[];
 }
 
 
@@ -35,10 +30,30 @@ export interface ScrapedData {
 export interface ScrapeSuccessResponse {
   success: true;
   data: ScrapedData;
+  message?: string;
 }
 
 
 export interface ScrapeErrorResponse {
   error: string;
-
 }
+
+export interface ScrapeMultiSuccessResponse {
+  success: true;
+  message: string;
+  count: number;
+  data: ScrapedData[];
+}
+
+export function isMultiScrapeResponse(response: ScrapeSuccessResponse | ScrapeMultiSuccessResponse): response is ScrapeMultiSuccessResponse {
+  return Array.isArray(response.data);
+}
+
+
+export interface ScrapeErrorResponse {
+error: string;
+}
+
+export type ScrapeRequestBodyOptions = Partial<ScrapeOptions> & {
+  scrapeLinkedPages?: boolean;
+};

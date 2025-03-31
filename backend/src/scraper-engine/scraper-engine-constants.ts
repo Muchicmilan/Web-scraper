@@ -27,7 +27,7 @@ export const COMMON_EXCLUDED_SELECTORS: ReadonlyArray<string> = [
   
   export const DEFAULT_HEADING_SELECTORS: ReadonlyArray<string> = ["h1", "h2", "h3", "h4", "h5", "h6"];
   
-  export const DEFAULT_TEXT_CONTAINER_SELECTORS: ReadonlyArray<string> = ["p", "span", "li", "div", "td", "article", "section"];
+  export const DEFAULT_TEXT_CONTAINER_SELECTORS: ReadonlyArray<string> = ["p", "span", "li", "div", "td", "article", "section", "strong"];
   
   export const DEFAULT_CONTENT_SELECTORS: ReadonlyArray<string> = [
     "article",

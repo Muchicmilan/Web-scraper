@@ -25,7 +25,7 @@ export const COMMON_EXCLUDED_SELECTORS = [
     "[style*='display: none']",
 ];
 export const DEFAULT_HEADING_SELECTORS = ["h1", "h2", "h3", "h4", "h5", "h6"];
-export const DEFAULT_TEXT_CONTAINER_SELECTORS = ["p", "span", "li", "div", "td", "article", "section"];
+export const DEFAULT_TEXT_CONTAINER_SELECTORS = ["p", "span", "li", "div", "td", "article", "section", "strong"];
 export const DEFAULT_CONTENT_SELECTORS = [
     "article",
     "section",

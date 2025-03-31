@@ -6,6 +6,7 @@ export interface ScrapeOptions {
     contentSelectors?: string[];
     excludeSelectors?: string[];
     minContentLength?: number;
+    scrapeLinkedPages? : boolean;
   }
 
   export interface ScrapedLink {
@@ -14,9 +15,8 @@ export interface ScrapeOptions {
   }
 
   export interface ScrapedSection {
-    heading: string | null;
+    heading : string | null;
     content: string;
-    links: ScrapedLink[];
   }
 
   export interface ScrapedData {
