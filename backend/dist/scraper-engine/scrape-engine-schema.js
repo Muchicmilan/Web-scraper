@@ -9,6 +9,7 @@ const scrapedDataSchema = new mongoose.Schema({
             _id: false
         },
     ],
+    tags: { type: [String], required: false, index: true },
     scrapedAt: { type: Date, default: Date.now },
 }, { timestamps: true });
 export const ScrapedDataModel = mongoose.model("ScrapedData", scrapedDataSchema);

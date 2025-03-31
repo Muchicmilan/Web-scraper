@@ -1,5 +1,3 @@
-import * as cheerio from "cheerio";
-
 export interface ScrapeOptions {
     contentSelector?: string;
     headingSelectors?: string[];
@@ -7,6 +5,7 @@ export interface ScrapeOptions {
     excludeSelectors?: string[];
     minContentLength?: number;
     scrapeLinkedPages? : boolean;
+    tags?: string[];
   }
 
   export interface ScrapedLink {
@@ -25,3 +24,10 @@ export interface ScrapeOptions {
     sections: ScrapedSection[];
   }
 
+  export interface CreateScrapeRequestBody{
+    url?: string;
+    options?: Partial<ScrapeOptions> & {
+      scrapeLinkedPages?: boolean;
+      tags?: string[]; // or keywords
+    }
+  }

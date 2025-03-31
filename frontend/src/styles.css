@@ -282,3 +282,31 @@ body {
   margin-top: 10px;
   margin-bottom: 15px;
 }
+
+.option-row label.option-label {
+  width: 150px; 
+  flex-shrink: 0; 
+}
+
+.results-tags {
+margin-bottom: 0.75rem;
+padding-top: 0.5rem;
+border-top: 1px solid #eee;
+}
+
+.results-tags strong {
+  margin-right: 5px;
+  font-weight: 600;
+}
+
+.tag-badge {
+display: inline-block;
+background-color: #007bff;
+color: #fff;
+padding: 3px 10px; 
+border-radius: 12px;
+font-size: 0.85em;
+margin-right: 6px;
+margin-bottom: 6px; 
+font-weight: 500;
+}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import ScraperForm from "./components/ScraperForm";
 import AdvancedOptions from "./components/AdvancedOptions";
 import ResultsDisplay from "./components/ResultDisplay";
@@ -9,6 +9,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 const UserInput: React.FC = () => {
     const [input, setInput] = useState<string>("");
+    const [keywordsInput, setKeywordsInput] = useState<string>("");
     const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
     const [scrapeLinkedPages, setScrapeLinkedPages] = useState<boolean>(false);
     const [options, setOptions] = useState<ScrapeOptions>({
@@ -20,7 +21,12 @@ const UserInput: React.FC = () => {
 
     const { results, error, loading, scrapeUrl } = useScraper(`${API_BASE_URL}/api/scrape`);
 
-    const handleSubmit = () => {
+    const handleSubmit = useCallback(() => {
+        const keywords = keywordsInput
+        .split(',')
+        .map(kw => kw.trim())
+        .filter(Boolean);
+
          let advancedOptionsPayload: Partial<ScrapeOptions> = {};
 
          if (showAdvanced) {
@@ -35,8 +41,9 @@ const UserInput: React.FC = () => {
          }
 
          const finalOptions: ScrapeRequestBodyOptions = {
-            ...advancedOptionsPayload,
-            scrapeLinkedPages: scrapeLinkedPages,
+            ...(Object.keys(advancedOptionsPayload).length > 0 && advancedOptionsPayload),
+            ...(scrapeLinkedPages && {scrapeLinkedPages : true}),
+            ...(keywords.length > 0 && {tags: keywords})
          };
 
          const payload = {
@@ -46,9 +53,9 @@ const UserInput: React.FC = () => {
 
 
         scrapeUrl(payload.url, payload.options);
-    };
+    }, [input, keywordsInput, options, showAdvanced, scrapeLinkedPages, scrapeUrl]);
 
-    const handleOptionsChange = (newOptions: ScrapeOptions) => {
+    const handleOptionsChange = (newOptions: Partial<ScrapeOptions>) => {
         setOptions(prev => ({ ...prev, ...newOptions }));
     };
 
@@ -59,6 +66,8 @@ const UserInput: React.FC = () => {
             <ScraperForm
                 input={input}
                 setInput={setInput}
+                keywordsInput = {keywordsInput}
+                setKeywordsInput = {setKeywordsInput}
                 handleSubmit={handleSubmit}
                 loading={loading}
                 showAdvanced={showAdvanced}

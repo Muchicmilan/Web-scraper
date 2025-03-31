@@ -1,13 +1,13 @@
 import mongoose from "mongoose";
-import { ScrapedSection, ScrapedLink } from "./scraper-engine-types.js";
+import { ScrapedSection} from "./scraper-engine-types.js";
 
 
 export interface IScrapedData extends mongoose.Document {
     url: string;
     title?: string;
     sections: ScrapedSection[]; 
+    tags?: string;
     scrapedAt: Date;
-
     createdAt: Date;
     updatedAt: Date;
 }
@@ -22,6 +22,7 @@ const scrapedDataSchema = new mongoose.Schema<IScrapedData>({
             _id: false
         },
     ],
+    tags: {type: [String], required: false, index: true},
     scrapedAt: { type: Date, default: Date.now },
 }, { timestamps: true });
 

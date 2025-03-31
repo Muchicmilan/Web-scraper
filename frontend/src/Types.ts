@@ -20,6 +20,7 @@ export interface ScrapedData {
   url: string;
   title: string; 
   sections: ScrapedSection[];
+  tags?: string[];
   scrapedAt: string; 
   createdAt: string; 
   updatedAt: string; 
@@ -56,4 +57,5 @@ error: string;
 
 export type ScrapeRequestBodyOptions = Partial<ScrapeOptions> & {
   scrapeLinkedPages?: boolean;
+  tags?: string[];
 };

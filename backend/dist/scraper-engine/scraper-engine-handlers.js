@@ -37,7 +37,7 @@ export const handleGetAllScrapes = async (req, res) => {
 export const handleCreateScrape = async (req, res) => {
     console.log('[Handler] Received POST /scrape request');
     const { url, options } = req.body;
-    if (!url) {
+    if (!url || typeof url !== 'string' || url.trim() === '') {
         console.log('[Handler] Validation failed: Missing URL.');
         res.status(400).json({ error: "URL is required" });
         return;
@@ -51,12 +51,14 @@ export const handleCreateScrape = async (req, res) => {
         return;
     }
     const shouldScrapeLinks = options?.scrapeLinkedPages === true;
+    const keywordsToFilterBy = options?.tags?.map(t => String(t).trim()).filter(Boolean) ?? undefined;
     const baseScrapeOptions = { ...options };
     delete baseScrapeOptions.scrapeLinkedPages;
+    delete baseScrapeOptions.tags;
     try {
         if (shouldScrapeLinks) {
             console.log(`[Handler] Initiating sequential multi-link scrape from ${url}`);
-            const results = await scrapeEveryLinkFromWebsite(url, baseScrapeOptions);
+            const results = await scrapeEveryLinkFromWebsite(url, baseScrapeOptions, keywordsToFilterBy);
             console.log(`[Handler] Sequential multi-link scrape from ${url} completed via service. Result count: ${results?.length}.`);
             res.status(200).json({
                 success: true,
@@ -68,10 +70,19 @@ export const handleCreateScrape = async (req, res) => {
         }
         else {
             console.log(`[Handler] Initiating single scrape for ${url}`);
-            const savedData = await scrapeAndSave(url, baseScrapeOptions);
-            console.log(`[Handler] Single scrape and save successful for ${url}`);
-            res.status(201).json({ success: true, data: savedData });
-            return;
+            const savedData = await scrapeAndSave(url, baseScrapeOptions, keywordsToFilterBy);
+            if (savedData) {
+                console.log(`[Handler] Single scrape,filter and save successful for ${url}`);
+                res.status(201).json({ success: true, data: savedData });
+                return;
+            }
+            else {
+                res.status(200).json({
+                    success: true,
+                    message: `Content from ${url} did not meet the keyword filter criteria or could not be parsed. No data saved.`,
+                    data: null
+                });
+            }
         }
     }
     catch (error) {

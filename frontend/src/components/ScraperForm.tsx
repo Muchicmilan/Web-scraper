@@ -3,6 +3,8 @@ import React from "react";
 interface ScraperFormProps {
     input: string;
     setInput: (value: string) => void;
+    keywordsInput: string;
+    setKeywordsInput: (value: string) => void;
     handleSubmit: () => void;
     loading: boolean;
     showAdvanced: boolean;
@@ -14,6 +16,8 @@ interface ScraperFormProps {
 const ScraperForm: React.FC<ScraperFormProps> = ({
     input,
     setInput,
+    keywordsInput,
+    setKeywordsInput,
     handleSubmit,
     loading,
     showAdvanced,
@@ -28,6 +32,7 @@ const ScraperForm: React.FC<ScraperFormProps> = ({
     };
 
     return (
+        //URL input and submit button
         <form onSubmit={onSubmit}>
             <div className="url-input-container">
                 <input
@@ -49,6 +54,22 @@ const ScraperForm: React.FC<ScraperFormProps> = ({
                     {loading ? "Scraping..." : "Submit"}
                 </button>
             </div>
+            {/*Keyword(Tag) input*/}
+            <div className="option-row" style={{ marginBottom: '15px' }}>
+                 <label htmlFor="keywordsInput" className="option-label" style={{width: 'auto', marginRight: '10px'}}>
+                    Analyze for Keywords:
+                </label>
+                <input
+                    id="keywordsInput"
+                    type="text"
+                    placeholder="e.g., Nis, politics (comma-separated) for filtering"
+                    value={keywordsInput}
+                    onChange={(e) => setKeywordsInput(e.target.value)}
+                    className="option-input"
+                    disabled={loading}
+                    aria-label="Keywords to analyze (comma-separated)"
+                />
+            </div>            
 
             <div className="form-toggle-container">
                 <button
