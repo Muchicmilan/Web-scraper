@@ -1,13 +1,16 @@
-import React, { useEffect, useState } from "react"
-import Axios from "axios"
-import UserInput from "./UserInput";
-const App = () => {
+import React from 'react';
+import './styles.css';
+import { ScraperProvider } from './context/ScraperContext'
+import ScraperDashboard from './views/ScraperDashboard';
 
+function App() {
   return (
-    <div>
-      <UserInput />
-    </div>
-  )
+    <ScraperProvider>
+        <main>
+            <ScraperDashboard />
+        </main>
+    </ScraperProvider>
+  );
 }
 
-export default App
+export default App;

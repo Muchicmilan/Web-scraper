@@ -1,125 +1,184 @@
-import mongoose from "mongoose";
-import { scrapeAndSave, scrapeEveryLinkFromWebsite, findOne, findAll, findOneByUrl } from "./scraper-engine-service.js";
-export const handleGetScrapeById = async (req, res) => {
-    console.log(`[Handler] Received GET /scrape/:id request for ID: ${req.params.id}`);
-    const { id } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        res.status(400).json({ error: "Invalid ID format provided." });
-        return;
-    }
+import mongoose from 'mongoose';
+import { ScraperConfigurationModel, ScrapedDataItemModel } from "./scrape-engine-schema.js";
+import { runScrapeJob } from "./scraper-engine-service.js";
+export const handleCreateConfiguration = async (req, res) => {
     try {
-        const scrapedData = await findOne(id);
-        if (!scrapedData) {
-            console.log(`[Handler] Data not found for ID: ${id}`);
-            res.status(404).json({ error: `Scraped data with ID ${id} not found.` });
-        }
-        else {
-            console.log(`[Handler] Successfully retrieved data for ID: ${id}`);
-            res.status(200).json({ success: true, data: scrapedData });
-        }
+        const newConfig = new ScraperConfigurationModel(req.body);
+        await newConfig.save();
+        res.status(201).json({ success: true, data: newConfig });
     }
     catch (error) {
-        console.error(`[Handler] Error processing GET /scrape/:id for ID ${id}:`, error);
-        res.status(500).json({ error: "Internal Server Error occurred while retrieving data." });
-    }
-};
-export const handleGetAllScrapes = async (req, res) => {
-    try {
-        const allData = await findAll();
-        console.log(`[Handler] Successfully retrieved all data (${allData.length} items).`);
-        res.status(200).json({ success: true, count: allData.length, data: allData });
-    }
-    catch (error) {
-        console.error('[Handler] Error processing GET /scrape/all:', error);
-        res.status(500).json({ error: "Internal Server Error occurred while retrieving data." });
-    }
-};
-export const handleCreateScrape = async (req, res) => {
-    console.log('[Handler] Received POST /scrape request');
-    const { url, options } = req.body;
-    if (!url || typeof url !== 'string' || url.trim() === '') {
-        console.log('[Handler] Validation failed: Missing URL.');
-        res.status(400).json({ error: "URL is required" });
-        return;
-    }
-    try {
-        new URL(url);
-    }
-    catch (_) {
-        console.log(`[Handler] Validation failed: Invalid URL format: ${url}`);
-        res.status(400).json({ error: "Invalid URL format provided." });
-        return;
-    }
-    const shouldScrapeLinks = options?.scrapeLinkedPages === true;
-    const keywordsToFilterBy = options?.tags?.map(t => String(t).trim()).filter(Boolean) ?? undefined;
-    const baseScrapeOptions = { ...options };
-    delete baseScrapeOptions.scrapeLinkedPages;
-    delete baseScrapeOptions.tags;
-    try {
-        if (shouldScrapeLinks) {
-            console.log(`[Handler] Initiating sequential multi-link scrape from ${url}`);
-            const results = await scrapeEveryLinkFromWebsite(url, baseScrapeOptions, keywordsToFilterBy);
-            console.log(`[Handler] Sequential multi-link scrape from ${url} completed via service. Result count: ${results?.length}.`);
-            res.status(200).json({
-                success: true,
-                message: `Sequential scraping process for links on ${url} finished. ${results?.length} links successfully scraped/retrieved. Check server logs for details on individual link errors.`,
-                count: results?.length,
-                data: results
-            });
-            return;
+        console.error("[Handler] Error creating configuration:", error);
+        if (error.code === 11000) {
+            res.status(409).json({ error: "Configuration name already exists." });
         }
-        else {
-            console.log(`[Handler] Initiating single scrape for ${url}`);
-            const savedData = await scrapeAndSave(url, baseScrapeOptions, keywordsToFilterBy);
-            if (savedData) {
-                console.log(`[Handler] Single scrape,filter and save successful for ${url}`);
-                res.status(201).json({ success: true, data: savedData });
-                return;
-            }
-            else {
-                res.status(200).json({
-                    success: true,
-                    message: `Content from ${url} did not meet the keyword filter criteria or could not be parsed. No data saved.`,
-                    data: null
-                });
-            }
-        }
-    }
-    catch (error) {
-        console.error(`[Handler] Error processing POST /scrape for ${url} (Mode: ${shouldScrapeLinks ? 'Multi-Link' : 'Single'}):`, error);
-        if (!shouldScrapeLinks && error.code === 11000) {
-            try {
-                const existingData = await findOneByUrl(url);
-                if (existingData) {
-                    console.log(`[Handler] Single scrape conflict for ${url}. Returning existing data.`);
-                    res.status(200).json({ success: true, data: existingData, message: "Data already existed." });
-                    return;
-                }
-                else {
-                    res.status(409).json({ error: "Conflict: URL already exists, but failed to retrieve existing data." });
-                    return;
-                }
-            }
-            catch (findError) {
-                console.error(`[Handler] Error finding existing data for ${url} after conflict:`, findError);
-                res.status(500).json({ error: "Conflict occurred, but failed to retrieve existing data." });
-                return;
-            }
-        }
-        if (error instanceof mongoose.Error.ValidationError) {
+        else if (error.name === 'ValidationError') {
             res.status(400).json({ error: `Validation Error: ${error.message}` });
+        }
+        else {
+            res.status(500).json({ error: "Failed to create configuration." });
+        }
+    }
+};
+export const handleGetAllConfigurations = async (req, res) => {
+    try {
+        const configs = await ScraperConfigurationModel.find().sort({ name: 1 }).lean();
+        res.status(200).json({ success: true, count: configs.length, data: configs });
+    }
+    catch (error) {
+        console.error("[Handler] Error fetching configurations:", error);
+        res.status(500).json({ error: "Failed to fetch configurations." });
+    }
+};
+export const handleGetConfigurationById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            res.status(400).json({ error: "Invalid ID format." });
             return;
         }
-        if (error.message?.includes('Failed to fetch URL')) {
-            const statusCode = error.message.includes('Status: 404') ? 404 : 502;
-            res.status(statusCode).json({ error: `Upstream Error: ${error.message}` });
+        const config = await ScraperConfigurationModel.findById(id).lean();
+        if (!config) {
+            res.status(404).json({ error: "Configuration not found." });
             return;
         }
-        if (error.message?.includes('Parsing failed')) {
-            res.status(422).json({ error: "Processing Error: " + error.message });
+        res.status(200).json({ success: true, data: config });
+    }
+    catch (error) {
+        console.error("[Handler] Error fetching configuration:", error);
+        res.status(500).json({ error: "Failed to fetch configuration." });
+    }
+};
+export const handleUpdateConfiguration = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            res.status(400).json({ error: "Invalid ID format." });
             return;
         }
-        res.status(500).json({ error: "Internal Server Error occurred." });
+        const updatedConfig = await ScraperConfigurationModel.findByIdAndUpdate(id, req.body, { new: true, runValidators: true }).lean();
+        if (!updatedConfig) {
+            res.status(404).json({ error: "Configuration not found." });
+            return;
+        }
+        res.status(200).json({ success: true, data: updatedConfig });
+    }
+    catch (error) {
+        console.error("[Handler] Error updating configuration:", error);
+        if (error.name === 'ValidationError') {
+            res.status(400).json({ error: `Validation Error: ${error.message}` });
+        }
+        else if (error.code === 11000) {
+            res.status(409).json({ error: "Configuration name conflict on update." });
+        }
+        else {
+            res.status(500).json({ error: "Failed to update configuration." });
+        }
+    }
+};
+export const handleDeleteConfiguration = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            res.status(400).json({ error: "Invalid ID format." });
+            return;
+        }
+        const deletedConfig = await ScraperConfigurationModel.findByIdAndDelete(id);
+        if (!deletedConfig) {
+            res.status(404).json({ error: "Configuration not found." });
+            return;
+        }
+        res.status(200).json({ success: true, message: "Configuration deleted successfully." });
+    }
+    catch (error) {
+        console.error("[Handler] Error deleting configuration:", error);
+        res.status(500).json({ error: "Failed to delete configuration." });
+    }
+};
+export const handleRunScrapeJob = async (req, res) => {
+    const { configId } = req.params;
+    try {
+        if (!mongoose.Types.ObjectId.isValid(configId)) {
+            res.status(400).json({ error: "Invalid Configuration ID format." });
+            return;
+        }
+        const config = await ScraperConfigurationModel.findById(configId).lean();
+        if (!config) {
+            res.status(404).json({ error: "Configuration not found." });
+            return;
+        }
+        runScrapeJob(config).then(results => {
+            console.log(`[API Handler Callback] Background job ${config.name} (${configId}) finished. Extracted ${results?.length} items (before saving).`);
+        }).catch(error => {
+            console.error(`[API Handler Callback] Background job ${config.name} (${configId}) failed:`, error.message);
+        });
+        console.log(`[API Handler] Accepted scrape job request for '${config.name}' (${configId}).`);
+        res.status(202).json({ success: true, message: `Scrape job '${config.name}' accepted and started in background.` });
+    }
+    catch (error) {
+        console.error(`[API Handler] Error initiating job for config ${configId}:`, error);
+        res.status(500).json({ error: "Failed to initiate scrape job." });
+    }
+};
+export const handleGetScrapedData = async (req, res) => {
+    const { configId, limit = '20', page = '1', sort = 'scrapedAt', order = '-1' } = req.query; // Add sort/order
+    if (!configId || typeof configId !== 'string' || !mongoose.Types.ObjectId.isValid(configId)) {
+        res.status(400).json({ error: "Valid 'configId' query parameter is required." });
         return;
+    }
+    const limitNum = parseInt(limit, 10);
+    const pageNum = parseInt(page, 10);
+    const sortOrder = parseInt(order, 10) === 1 ? 1 : -1;
+    const sortField = typeof sort === 'string' ? sort : 'scrapedAt';
+    if (isNaN(limitNum) || limitNum <= 0 || limitNum > 100 || isNaN(pageNum) || pageNum <= 0) {
+        res.status(400).json({ error: "Invalid 'limit' (1-100) or 'page' (> 0) parameter." });
+        return;
+    }
+    const skip = (pageNum - 1) * limitNum;
+    const sortDirection = parseInt(order, 10) === 1 ? 1 : -1;
+    const sortOption = { [sortField]: sortDirection };
+    try {
+        const [items, totalCount] = await Promise.all([
+            ScrapedDataItemModel.find({ configId: configId })
+                .sort(sortOption)
+                .limit(limitNum)
+                .skip(skip)
+                .lean(),
+            ScrapedDataItemModel.countDocuments({ configId: configId })
+        ]);
+        res.status(200).json({
+            success: true,
+            data: items,
+            pagination: {
+                totalItems: totalCount,
+                itemCount: items.length,
+                itemsPerPage: limitNum,
+                currentPage: pageNum,
+                totalPages: Math.ceil(totalCount / limitNum)
+            }
+        });
+    }
+    catch (error) {
+        console.error(`[Handler] Error fetching scraped data for config ${configId}:`, error);
+        res.status(500).json({ error: "Failed to fetch scraped data." });
+    }
+};
+export const handleGetScrapedItemById = async (req, res) => {
+    const { itemId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(itemId)) {
+        res.status(400).json({ error: "Invalid Scraped Item ID format." });
+        return;
+    }
+    try {
+        const item = await ScrapedDataItemModel.findById(itemId).lean();
+        if (!item) {
+            res.status(404).json({ error: "Scraped data item not found." });
+            return;
+        }
+        res.status(200).json({ success: true, data: item });
+    }
+    catch (error) {
+        console.error(`[Handler] Error fetching scraped item by ID ${itemId}:`, error);
+        res.status(500).json({ error: "Failed to fetch scraped data item." });
     }
 };

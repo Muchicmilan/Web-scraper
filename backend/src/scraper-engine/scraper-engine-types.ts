@@ -1,33 +1,16 @@
 export interface ScrapeOptions {
-    contentSelector?: string;
-    headingSelectors?: string[];
-    contentSelectors?: string[];
-    excludeSelectors?: string[];
-    minContentLength?: number;
-    scrapeLinkedPages? : boolean;
-    tags?: string[];
-  }
+  excludeSelectors?: string[];
+}
 
-  export interface ScrapedLink {
-    text: string;
-    url: string;
-  }
+export type ExtractedData = Record<string, any>;
 
-  export interface ScrapedSection {
-    heading : string | null;
-    content: string;
-  }
+export interface ProcessingResult {
+  url: string;
+  data: ExtractedData;
+}
 
-  export interface ScrapedData {
-    url: string;
-    title: string;
-    sections: ScrapedSection[];
-  }
-
-  export interface CreateScrapeRequestBody{
-    url?: string;
-    options?: Partial<ScrapeOptions> & {
-      scrapeLinkedPages?: boolean;
-      tags?: string[]; // or keywords
-    }
-  }
+export type SingleItemOutcome =
+    | { type: 'combined'; result: ProcessingResult }
+    | { type: 'queue'; url: string }          
+    | { type: 'direct'; result: ProcessingResult }
+    | { type: 'skip'; reason: string }; 

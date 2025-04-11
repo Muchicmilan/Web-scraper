@@ -1,18 +1,28 @@
 import { Router } from "express";
 
 import {
-    handleCreateScrape,
-    handleGetScrapeById,
-    handleGetAllScrapes
-} from "./scraper-engine-handlers.js";
+    handleCreateConfiguration,
+    handleGetAllConfigurations,
+    handleGetConfigurationById,
+    handleUpdateConfiguration,
+    handleDeleteConfiguration,
+    handleRunScrapeJob,
+    handleGetScrapedData,
+    handleGetScrapedItemById
+} from "./scraper-engine-handlers.js"
 
 const scrapeEngineRouter = Router();
 
-scrapeEngineRouter.post("/scrape", handleCreateScrape);
+scrapeEngineRouter.post("/configurations", handleCreateConfiguration);
+scrapeEngineRouter.get("/configurations", handleGetAllConfigurations);
+scrapeEngineRouter.get("/configurations/:id", handleGetConfigurationById);
+scrapeEngineRouter.put("/configurations/:id", handleUpdateConfiguration); 
+scrapeEngineRouter.delete("/configurations/:id", handleDeleteConfiguration);
 
-scrapeEngineRouter.get("/scrape/all", handleGetAllScrapes);
+scrapeEngineRouter.post("/scrape-jobs/:configId/run", handleRunScrapeJob);
 
-scrapeEngineRouter.get("/scrape/:id", handleGetScrapeById);
+scrapeEngineRouter.get("/scraped-data", handleGetScrapedData);
+scrapeEngineRouter.get("/scraped-data/:itemId", handleGetScrapedItemById);
 
 
 export default scrapeEngineRouter;
