@@ -310,3 +310,265 @@ margin-right: 6px;
 margin-bottom: 6px; 
 font-weight: 500;
 }
+
+.form-section {
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+    margin-top: 20px;
+}
+.form-section h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 1.1em;
+}
+.form-field {
+    margin-bottom: 12px;
+}
+.form-field label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 500;
+    font-size: 0.95em;
+}
+.form-field input[type="text"],
+.form-field input[type="url"],
+.form-field input[type="number"],
+.form-field select,
+.form-field textarea {
+    width: 95%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+}
+.form-field input[type="number"] {
+    width: auto; /* Allow number inputs to be smaller */
+    min-width: 80px;
+}
+
+.form-field small {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.85em;
+    color: #666;
+}
+.options-subsection {
+    border-left: 3px solid #ccc;
+    padding-left: 15px;
+    margin-left: 5px;
+    margin-bottom: 15px;
+}
+.infinite-scroll-options { border-color: #17a2b8; }
+.load-more-options { border-color: #fd7e14; }
+.fixed-scroll-options { border-color: #6f42c1; }
+.options-subsection h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1em;
+    color: #555;
+}
+
+.form-section {
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+    margin-top: 20px;
+}
+.form-section h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 1.1em;
+}
+.form-field {
+    margin-bottom: 12px;
+}
+.form-field label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 500;
+    font-size: 0.95em;
+}
+.form-field input[type="text"],
+.form-field input[type="url"],
+.form-field input[type="number"],
+.form-field select,
+.form-field textarea {
+    width: 95%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+}
+.form-field input[type="number"] {
+    width: auto;
+    min-width: 80px;
+}
+
+.form-field small {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.85em;
+    color: #666;
+}
+.options-subsection {
+    border-left: 3px solid #ccc;
+    padding-left: 15px;
+    margin-left: 5px;
+    margin-bottom: 15px;
+}
+.infinite-scroll-options { border-color: #17a2b8; }
+.load-more-options { border-color: #fd7e14; }
+.fixed-scroll-options { border-color: #6f42c1; }
+.options-subsection h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1em;
+    color: #555;
+}
+
+.configuration-form-refactored .form-section {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 25px;
+    background-color: #fdfdfd;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.configuration-form-refactored .form-section h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    font-size: 1.2em;
+    color: #0056b3;
+    font-weight: 600;
+}
+.configuration-form-refactored .form-section h4 {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: 1.05em;
+    color: #444;
+    font-weight: 600;
+}
+
+.configuration-form-refactored .form-field {
+    margin-bottom: 15px;
+}
+.configuration-form-refactored .form-field label,
+.configuration-form-refactored .form-field-list label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    font-size: 0.95em;
+    color: #333;
+}
+.configuration-form-refactored .form-field input[type="text"],
+.configuration-form-refactored .form-field input[type="url"],
+.configuration-form-refactored .form-field input[type="number"],
+.configuration-form-refactored .form-field select,
+.configuration-form-refactored .form-field textarea {
+    display: block;
+    width: 95%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+    box-sizing: border-box;
+}
+.configuration-form-refactored .form-field input[type="number"] {
+    width: auto;
+    min-width: 100px;
+    display: inline-block;
+    margin-right: 5px;
+}
+.configuration-form-refactored .form-field textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.configuration-form-refactored .form-field small,
+.configuration-form-refactored .form-field-list small {
+    display: block;
+    margin-top: 5px;
+    font-size: 0.85em;
+    color: #666;
+    line-height: 1.4;
+}
+
+.configuration-form-refactored .options-subsection {
+    border-left: 3px solid #ccc;
+    padding-left: 15px;
+    margin-left: 5px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+.configuration-form-refactored .infinite-scroll-options { border-color: #17a2b8; }
+.configuration-form-refactored .load-more-options { border-color: #fd7e14; }
+.configuration-form-refactored .fixed-scroll-options { border-color: #6f42c1; }
+.configuration-form-refactored .screenshot-options { border-color: #28a745; }
+.configuration-form-refactored .wait-options { border-color: #ffc107; }
+
+
+/* Style for FieldMappingInput rows if needed */
+.field-mapping-row {
+    border: 1px solid #eee;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    background-color: #fff;
+}
+.field-mapping-row > div {
+    margin-bottom: 10px;
+}
+.field-mapping-row label {
+    font-weight: 500;
+    font-size: 0.9em;
+}
+.field-mapping-row button {
+    margin-top: 5px;
+    padding: 5px 10px;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.form-actions-sticky {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    background-color: #ffffff;
+    padding: 15px;
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1px solid #dee2e6;
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+}
+.form-actions-sticky button {
+    padding: 10px 20px;
+    font-size: 1em;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.form-actions-sticky button[type="submit"] {
+    background-color: #007bff;
+    color: white;
+    border: none;
+}
+.form-actions-sticky button[type="submit"]:disabled {
+    background-color: #a0cfff;
+}
+.form-actions-sticky button[type="button"] {
+    margin-left: 10px;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+}
+.form-actions-sticky button[type="button"]:disabled {
+    background-color: #adb5bd;
+}

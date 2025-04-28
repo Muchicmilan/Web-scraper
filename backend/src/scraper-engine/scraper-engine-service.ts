@@ -5,10 +5,17 @@ import {
     IScraperConfiguration,
     ScrapedDataItemModel,
      } from "./scrape-engine-schema.js";
+import {
+    takeScreenshot,
+    applyPageWait,
+    closePopups,
+    scrollToBottomUntilStable,
+    handleFixedScrollsInteraction,
+    handleLoadMoreButtonInteraction
+} from "./scraper-engine-interact-utils.js";
 import { 
     checkStructuredDataForKeywords,
     extractDetailData,
-    takeScreenshot
     } from "./scraper-engine-utils.js";
 import {
     MAX_DETAIL_PAGES_PER_JOB,
@@ -62,7 +69,6 @@ export async function getEnginePoolOptions(): Promise<BrowserPoolOptions> {
     }
 }
 
-
 export async function shutdownBrowserPool(): Promise<void> {
     if (browserPool) {
         console.log('[Service:shutdownBrowserPool] Shutting down browser pool...');
@@ -77,13 +83,9 @@ export function getBrowserPoolStats() {
     return browserPool ? browserPool.getStats() : null;
 }
 
-
 export function getCurrentPoolOptions(): BrowserPoolOptions | null {
     return currentPoolOptions ? { ...currentPoolOptions } : null;
 }
-
-
-
 
 async function processDetailPage(
     url: string,
@@ -99,6 +101,8 @@ async function processDetailPage(
     try {
         pageObj = await pool.getPage(url);
         const { page } = pageObj;
+        await applyPageWait(page, config.pageLoadWaitOptions);
+        await closePopups(page, config.closePopupSelectors);
         await takeScreenshot(page,config,'detail');
         const extractedData = await extractDetailData(page, config);
 
@@ -118,7 +122,7 @@ async function processDetailPage(
 
         if (pageObj?.page) {
             try {
-                await pool.releasePage(pageObj.page);
+                await pool.releasePage(pageObj?.page);
                 console.log(`[Service:processDetailPage] Released page for ${url} after error on attempt ${currentAttempt}.`);
             } catch (releaseError: any) {
                 console.error(`[Service:processDetailPage] Error releasing page for ${url} after error: ${releaseError.message}`);
@@ -163,15 +167,80 @@ async function processListPage(
     const limit = pLimit(concurrencyLimit);
     console.log(`[Service:processListPage] Concurrency limit set to: ${concurrencyLimit}`);
 
+    const interactionOpts = config.interactionOptions;
+    const strategy = interactionOpts?.interactionStrategy;
+    const maxItems = interactionOpts?.maxItemsToScrape
+
     try {
         pageObj = await pool.getPage(startUrl);
         const { page } = pageObj;
         const listPageUrl = page.url();
-        
+        await applyPageWait(page, config.pageLoadWaitOptions);
+        await closePopups(page, config.closePopupSelectors);
+
+        console.log('[Service:processListPage] Adding extra delay (e.g., 3s) before interactions...');
+        await new Promise(resolve => setTimeout(resolve, 3000));
+
+        console.log(`[Service:processListPage] Applying interaction strategy: ${strategy}`);
+        switch(strategy) {
+            case 'infiniteScroll' :
+                if(interactionOpts){
+                    await scrollToBottomUntilStable(
+                        page,
+                        interactionOpts.maxScrolls,
+                        interactionOpts.scrollDelayMs,
+                        interactionOpts.scrollStagnationTimeoutMs
+                    );
+                }
+                else {
+                    console.warn("[Service:processListPage] 'infiniteScroll' strategy selected but no options found. Using defaults.");
+                    await scrollToBottomUntilStable(page);
+                }
+                break;
+
+            case 'loadMoreButton':
+                if(interactionOpts?.loadMoreButtonSelector){
+                    const requiredButtonOpts = {
+                        loadMoreButtonSelector: interactionOpts.loadMoreButtonSelector,
+                        maxClicks: interactionOpts.maxClicks ?? 5,
+                        clickDelayMs: interactionOpts.clickDelayMs ?? 1500,
+                        scrollDelayMs: interactionOpts.scrollDelayMs ?? 500,
+                        scrollStagnationTimeoutMs: interactionOpts.scrollStagnationTimeoutMs ?? 3000,
+                        maxScrolls: interactionOpts.maxScrolls ?? 20,
+                        maxItemsToScrape: interactionOpts.maxItemsToScrape
+                    };
+                    await handleLoadMoreButtonInteraction(page, requiredButtonOpts, config.itemSelector)
+                }
+                else {
+                    console.warn(`[Service:processListPage] 'loadMoreButton' strategy selected but 'loadMoreButtonSelector' is missing. Skipping interaction.`);
+                }
+                break;
+
+            case 'fixedScrolls' :
+                if(interactionOpts){
+                    const requiredScrollOpts = {
+                        maxScrolls: interactionOpts.maxScrolls ?? 20,
+                        scrollDelayMs: interactionOpts.scrollDelayMs ?? 500
+                    };
+                    await handleFixedScrollsInteraction(page, requiredScrollOpts);
+                }
+                else {
+                    console.warn("[Service:processListPage] 'fixedScrolls' strategy selected but no options found. Using defaults.");
+                    await handleFixedScrollsInteraction(page, { maxScrolls: 20, scrollDelayMs: 500 });
+                }
+                break;
+
+            case 'none' :
+            default:
+                console.log(`[Service:processListPage] No interaction strategy applied.`);
+                break;
+        }
+        console.log(`[Service:processListPage] Finished page interactions.`);
+
         await takeScreenshot(page,config,'list');
 
         console.log(`[Service:processListPage] Evaluating list items with selector: "${config.itemSelector}"`);
-        const itemEvalResults: ListItemEvalResult[] = await page.$$eval(
+        let itemEvalResults: ListItemEvalResult[] = await page.$$eval(
             config.itemSelector,
             (itemElements, mappings, url, funcStr) => {
                  const processItemFunc = eval(`(${funcStr})`);
@@ -183,6 +252,12 @@ async function processListPage(
         );
 
         console.log(`[Service:processListPage] DEBUG: $$eval completed. Found ${itemEvalResults.length} raw item results.`);
+
+        const maxItems = config.interactionOptions?.maxItemsToScrape;
+        if (maxItems !== undefined && maxItems > 0 && itemEvalResults.length > maxItems) {
+            console.log(`[Service:processListPage] Limiting results from ${itemEvalResults.length} to ${maxItems} based on maxItemsToScrape.`);
+            itemEvalResults = itemEvalResults.slice(0, maxItems);
+        }
 
         console.log(`[Service:processListPage] DEBUG: Entering loop to store list data and queue detail tasks...`);
         for (const [index, itemResult] of itemEvalResults.entries()) {
@@ -289,7 +364,6 @@ async function saveResultsToDB(resultsToSave: ProcessingResult[], configId: mong
     }
     console.log(`[Service:saveResults] Saving/Updating ${resultsToSave.length} items to DB for config ${configId}...`);
 
-    console.log(`[Service:saveResults] DEBUG: Sample data object being prepared for save (first item):`, JSON.stringify(resultsToSave[0]?.data));
 
     const bulkOps = resultsToSave.map(result => ({
         updateOne: {

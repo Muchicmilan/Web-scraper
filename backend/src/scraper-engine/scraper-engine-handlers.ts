@@ -199,7 +199,7 @@ export const handleGetScrapedData = async (req: Request, res: Response): Promise
 
     const limitNum = parseInt(limit as string, 10);
     const pageNum = parseInt(page as string, 10);
-    const sortOrder = parseInt(order as string, 10) === 1 ? 1 : -1;
+    //const sortOrder = parseInt(order as string, 10) === 1 ? 1 : -1;
     const sortField = typeof sort === 'string' ? sort : 'scrapedAt';
 
     if (isNaN(limitNum) || limitNum <= 0 || limitNum > 100 || isNaN(pageNum) || pageNum <= 0) {

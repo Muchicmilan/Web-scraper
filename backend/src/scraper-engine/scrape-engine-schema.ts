@@ -17,6 +17,26 @@ export interface IFieldMapping {
     attributeName?: string;
 }
 
+export interface IInteractionOptions {
+    interactionStrategy?: 'none' | 'infiniteScroll' | 'loadMoreButton' | 'fixedScrolls';
+    maxScrolls?: number;
+    scrollDelayMs?: number;
+    scrollStagnationTimeoutMs?: number;
+    loadMoreButtonSelector?: string;
+    maxClicks?: number;
+    clickDelayMs?: number;
+    maxItemsToScrape?: number;
+    buttonScrollAttempts?: number;
+    buttonScrollDelayMs?: number;
+}
+
+export interface IPageLoadWait {
+    waitStrategy ?: 'none' | 'timeout' | 'selector';
+    waitForTimeout?: number;
+    waitForSelector?: string;
+    waitForTimeoutOnSelector?: number;
+}
+
 export interface IScraperConfiguration extends Document {
     name: string;
     startUrls: string[];
@@ -41,6 +61,9 @@ export interface IScraperConfiguration extends Document {
     }
     cronSchedule?: string;
     cronEnabled?: boolean;
+    pageLoadWaitOptions?: IPageLoadWait;
+    interactionOptions?: IInteractionOptions;
+    closePopupSelectors?: string[];
     createdAt: Date;
     updatedAt: Date;
 }
@@ -62,6 +85,19 @@ const EngineSettingsSchema = new Schema<IEngineSettings>({
     retryLimit : {type: Number, required: true, default: DEFAULT_POOL_OPTIONS.retryLimit, min: 0},
 }, {timestamps : true});
 
+const InteractionOptionsSchema = new Schema<IInteractionOptions>({
+    interactionStrategy: { type: String, enum: ['none', 'infiniteScroll', 'loadMoreButton', 'fixedScrolls'], default: 'none', required: false },
+    maxScrolls: { type: Number, min: 1, default: 20, required: false },
+    scrollDelayMs: { type: Number, min: 200, default: 500, required: false },
+    scrollStagnationTimeoutMs: { type: Number, min: 1000, default: 3000, required: false },
+    loadMoreButtonSelector : {type: String,required: false},
+    maxClicks : {type: Number, required: false, min: 0, default: 0},
+    clickDelayMs : {type: Number, required: false, min: 500, default: 1000},
+    maxItemsToScrape : {type: Number, required: false, min: 50},
+    buttonScrollAttempts: { type: Number, min: 1, default: 3, required: false },
+    buttonScrollDelayMs: { type: Number, min: 100, default: 400, required: false },
+},{_id: false})
+
 EngineSettingsSchema.pre<IEngineSettings>('validate', function (next){
     if (this.minPoolSize > this.maxPoolSize){
         next(new Error ('minPoolSize cannot be greater than maxPoolSize'));
@@ -77,6 +113,13 @@ const FieldMappingSchema = new Schema<IFieldMapping>({
     extractFrom: { type: String, enum: ['text', 'attribute', 'html'], required: true, default: 'text' },
     attributeName: { type: String, required: function() { return (this as IFieldMapping).extractFrom === 'attribute'; } }
 }, { _id: false });
+
+const PageLoadWaitOptionsSchema = new Schema<IPageLoadWait>({
+    waitStrategy : {type: String,enum: ['none','timeout','selector'], default:'none', required: false},
+    waitForTimeout: {type: Number, required: false, min: 1},
+    waitForSelector: {type: String, required: false},
+    waitForTimeoutOnSelector:{type: Number, required: false, min: 100, default: 1000},
+}, {_id: false });
 
 const ScraperConfigurationSchema = new Schema<IScraperConfiguration>({
     name: { type: String, required: true, unique: true, index: true },
@@ -99,6 +142,9 @@ const ScraperConfigurationSchema = new Schema<IScraperConfiguration>({
         quality:{type:Number, min: 1, max: 100, default:100, required: false},
         pathTemplate:{type:String, required:false}
     },
+    closePopupSelectors: {type: [String], required: false},
+    pageLoadWaitOptions: {type: PageLoadWaitOptionsSchema, required: false},
+    interactionOptions: {type: InteractionOptionsSchema, required: false},
     detailFieldMappings: {type: [FieldMappingSchema], required:false},
     keywordsToFilterBy: { type: [String], required: false },
     cronSchedule: {type: String, required: false, validate: {

@@ -1,6 +1,5 @@
 import puppeteer, { Browser, Page } from "puppeteer";
 import { DEFAULT_USER_AGENT, PUPPETEER_TIMEOUT } from "./scraper-engine-constants.js";
-import { EngineSettingsModel } from "./scrape-engine-schema.js";
 
 export interface BrowserPoolOptions {
     maxPoolSize: number;

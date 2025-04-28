@@ -1,12 +1,11 @@
-import { ObjectId } from 'mongoose';
-
-
 export interface FieldMapping {
     fieldName: string;
     selector: string;
     extractFrom: 'text' | 'attribute' | 'html';
     attributeName?: string;
 }
+
+export type ListFieldKey = 'startUrls' | 'excludeSelectors' | 'keywordsToFilterBy' | 'closePopupSelectors';
 
 
 export interface ScrapedDataItem {
@@ -17,6 +16,19 @@ export interface ScrapedDataItem {
     data: Record<string, any>;
     createdAt: string;
     updatedAt: string;
+}
+
+export interface InteractionOptions {
+    interactionStrategy?: 'none' | 'infiniteScroll' | 'loadMoreButton' | 'fixedScrolls';
+    maxScrolls?: number;
+    scrollDelayMs?: number;
+    scrollStagnationTimeoutMs?: number;
+    loadMoreButtonSelector?: string;
+    maxClicks?: number;
+    clickDelayMs?: number;
+    buttonScrollAttempts?: number;
+    buttonScrollDelayMs?: number;
+    maxItemsToScrape?: number;
 }
 
 
@@ -35,6 +47,13 @@ export interface ApiPaginatedResponse<T> extends ApiSuccessResponse<T[]> {
         currentPage: number;
         totalPages: number;
     };
+}
+
+export interface PageLoadWaitOptions {
+    waitStrategy?: 'none' | 'selector' | 'timeout';
+    waitForTimeout?: number;
+    waitForSelector?: string;
+    waitForTimeoutOnSelector?: number;
 }
 
 export interface ScraperConfiguration {
@@ -58,10 +77,16 @@ export interface ScraperConfiguration {
     enableScreenshots?: boolean,
     screenshotOptions?: {
         fullPage?: boolean;
+        type?: 'png' | 'jpeg' | 'webp';
     }
+    pageLoadWaitOptions?: PageLoadWaitOptions;
+    closePopupSelectors?: string[];
+    interactionOptions?: InteractionOptions;
     createdAt: string;
     updatedAt: string;
   }
+
+
 
 
 export interface ApiErrorResponse {

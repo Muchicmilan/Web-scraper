@@ -181,7 +181,7 @@ export const handleGetScrapedData = async (req, res) => {
     }
     const limitNum = parseInt(limit, 10);
     const pageNum = parseInt(page, 10);
-    const sortOrder = parseInt(order, 10) === 1 ? 1 : -1;
+    //const sortOrder = parseInt(order as string, 10) === 1 ? 1 : -1;
     const sortField = typeof sort === 'string' ? sort : 'scrapedAt';
     if (isNaN(limitNum) || limitNum <= 0 || limitNum > 100 || isNaN(pageNum) || pageNum <= 0) {
         res.status(400).json({ error: "Invalid 'limit' (1-100) or 'page' (> 0) parameter." });

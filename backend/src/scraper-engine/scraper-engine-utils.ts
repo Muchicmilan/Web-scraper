@@ -1,16 +1,16 @@
-import puppeteer, {Browser, Page, ElementHandle} from "puppeteer";
-import { DEFAULT_USER_AGENT, AXIOS_REQUEST_TIMEOUT } from "./scraper-engine-constants.js";
+import puppeteer, {Browser, Page} from "puppeteer";
+import { DEFAULT_USER_AGENT} from "./scraper-engine-constants.js";
 import crypto from 'crypto'
 import {
     PUPPETEER_TIMEOUT
 } from "./scraper-engine-constants.js";
-import { IFieldMapping } from "./scrape-engine-schema.js";
-import { ExtractedData, SingleItemOutcome, ListItemEvalResult} from "./scraper-engine-types.js";
+import {IFieldMapping, IPageLoadWait} from "./scrape-engine-schema.js";
+import { ExtractedData,ListItemEvalResult} from "./scraper-engine-types.js";
 import path from 'path';
 import fs from 'fs/promises'
 import { IScraperConfiguration } from "./scrape-engine-schema.js";
 
-
+// TODO Remove the duplicate lines of code
 export async function launchBrowser(): Promise<Browser> {
     console.log("[Utils:launchBrowser] Launching browser...");
     try {
@@ -187,7 +187,7 @@ export async function extractDetailData(
                  function extractData(targetElement: Element | null, mappings: IFieldMapping[], pageUrl: string): ExtractedData {
                      if (!targetElement) return {};
                      const resultData: ExtractedData = {};
-                     for (const mapping of mappings) { /* ... extraction logic ... */
+                     for (const mapping of mappings) {
                          if (!mapping || !mapping.fieldName || !mapping.selector || !mapping.extractFrom) continue;
                          let value: string | null | undefined = undefined;
                          try {
@@ -306,60 +306,3 @@ export function simpleDeepClone<T>(obj: T): T {
     return clonedObj;
   }
 
-export async function takeScreenshot(
-    page: Page,
-    config: IScraperConfiguration,
-    context: 'list' | 'detail' | string = 'detail'
-): Promise<void> {
-    if (!config.enableScreenshots) {
-        return;
-    }
-
-    const screenshotDelayMs = 1000; 
-    try {
-        console.log(`[Service:takeScreenshot] Waiting ${screenshotDelayMs}ms for content to potentially load before screenshot for ${page.url()}...`);
-        await new Promise(resolve => setTimeout(resolve, screenshotDelayMs));
-        console.log(`[Service:takeScreenshot] Finished waiting delay. Proceeding with screenshot.`);
-    } catch (delayError: any) {
-        console.error(`[Service:takeScreenshot] Error during fixed delay: ${delayError.message}`);
-    }
-
-    const options = config.screenshotOptions || {};
-    const url = page.url();
-    const timestamp = new Date();
-    const dateStr = timestamp.toISOString().split('T')[0];
-    const timeStr = timestamp.toTimeString().split(' ')[0].replace(/:/g, '-');
-
-    let safeUrlPart = 'url-error';
-    try {
-        safeUrlPart = crypto.createHash('sha1').update(url).digest('hex').substring(0, 16);
-    } catch (e) {
-         console.warn(`[Service:takeScreenshot] Could not generate hash for URL: ${url}`);
-         safeUrlPart = crypto.createHash('sha1').update(Date.now().toString()).digest('hex').substring(0, 16);
-    }
-
-
-    const safeConfigName = config.name
-        .replace(/[<>:"/\\|?* ]+/g, '_')
-        .substring(0, 50);
-    const screenshotDir = path.resolve(process.cwd(), 'screenshots', safeConfigName);
-
-    const filename = `${dateStr}_${timeStr}_${context}_${safeUrlPart}.png`;
-    let fullPath = path.join(screenshotDir, filename);
-
-
-    try {
-        await fs.mkdir(screenshotDir, { recursive: true });
-
-        console.log(`[Service:takeScreenshot] Taking screenshot for ${url}. Save path: ${fullPath}`);
-        await page.screenshot({
-            path: fullPath,
-            fullPage: options.fullPage ?? true,
-        });
-        console.log(`[Service:takeScreenshot] Screenshot saved successfully: ${fullPath}`);
-
-    } catch (error: any) {
-        console.error(`[Service:takeScreenshot] Failed to take or save screenshot for ${url} at path ${fullPath}: ${error.message}`);
-        console.error(error.stack);
-    }
-}
