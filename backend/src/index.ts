@@ -3,11 +3,10 @@ dotenv.config();
 import express, {Application} from "express";
 import cors from "cors";
 import { connectDB } from "./database.js"
-import scrapeEngineRouter from "./scraper-engine/scraper-engine-controller.js";
-import { initializeCronJobs, stopAllJobs } from "./scraper-engine/scraper-cron-service.js";
+import { initializeCronJobs, stopAllJobs } from "./scraper-engine/cron/cronScheduling.js";
 import mongoose from "mongoose";
-import { initializeBrowserPool, shutdownBrowserPool } from "./scraper-engine/scraper-engine-service.js";
-
+import {initializeBrowserPool, shutdownBrowserPool} from "./scraper-engine/browserPooling/browserPoolInstancing.js";
+import scrapeEngineRouter from "./scraper-engine/scraperEngine.controller.js";
 
 
 const app: Application = express();
