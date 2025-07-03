@@ -7,6 +7,9 @@ import {MAX_DETAIL_PAGES_PER_JOB} from "../constants/puppeteer.constants.js";
 import {processDetailPage} from "./detailPage.service.js";
 import {processListPage} from "./listPage.service.js";
 import {checkStructuredDataForKeywords} from "../utils/keywordDetection.js";
+import {handleLogin} from "../utils/loginHelper.js";
+import {AccountModel} from "../models/account.model.js";
+import {Page} from "puppeteer";
 
 async function saveResultsToDB(resultsToSave: ProcessingResult[], configId: mongoose.Types.ObjectId): Promise<number> {
     let savedCount = 0;
@@ -48,36 +51,51 @@ async function saveResultsToDB(resultsToSave: ProcessingResult[], configId: mong
 export async function runScrapeJob(config: IScraperConfiguration): Promise<ProcessingResult[]> {
     console.log(`[Service:runScrapeJob] Starting job: ${config.name} (${config._id}), Type: ${config.pageType}`);
 
-    await initializeBrowserPool();
-
-    let allExtractedResults: ProcessingResult[] = [];
     const processedDetailUrls = new Set<string>();
+    let allExtractedResults: ProcessingResult[] = [];
 
     try {
+        // If login is required, we must get a page just to log in, then release it.
+        // The shared cookies will persist in the browser instance for other pages to use.
+        if (config.loginConfig?.requiresLogin && config.loginConfig.accountId) {
+            console.log(`[Service:runScrapeJob] Job requires login. Performing login once to set cookies.`);
+            const pool = await initializeBrowserPool();
+            let loginPageObj: { page: Page; browserId: string } | null = null;
+            try {
+                loginPageObj = await pool.getPage();
+                const account = await AccountModel.findById(config.loginConfig.accountId);
+                if (!account) throw new Error(`Account with ID ${config.loginConfig.accountId} not found.`);
+
+                // Use the loginUrl from the config for the login attempt
+                await loginPageObj.page.goto(config.loginConfig.loginUrl!, { waitUntil: 'networkidle2' });
+                await handleLogin(loginPageObj.page, account, config.loginConfig);
+
+                console.log(`[Service:runScrapeJob] Login complete, cookies are now set for this browser instance.`);
+            } finally {
+                if (loginPageObj) {
+                    await pool.releasePage(loginPageObj.page);
+                    console.log(`[Service:runScrapeJob] Login page released.`);
+                }
+            }
+        }
+
         const startUrlPromises: Promise<ProcessingResult[]>[] = [];
         console.log(`[Service:runScrapeJob] Processing ${config.startUrls.length} start URL(s) for ${config.name}...`);
 
         for (const startUrl of config.startUrls) {
             console.log(`[Service:runScrapeJob] --- Queueing Start URL: ${startUrl} for job ${config.name} ---`);
 
+            let promise: Promise<ProcessingResult[]>;
             if (config.pageType === 'DetailPage') {
-                if (processedDetailUrls.size >= MAX_DETAIL_PAGES_PER_JOB) { /* ... limit check ... */ continue; }
-                if (!processedDetailUrls.has(startUrl)) {
-                    processedDetailUrls.add(startUrl);
-                    const promise = processDetailPage(startUrl, config).then(result => result ? [result] : []);
-                    startUrlPromises.push(promise);
-                } else {}
-
-            } else if (config.pageType === 'ListPage') {
-                const promise = processListPage(startUrl, config, processedDetailUrls);
-                startUrlPromises.push(promise);
+                promise = processDetailPage(startUrl, config).then(result => result ? [result] : []);
+            } else { // ListPage
+                promise = processListPage(startUrl, config, processedDetailUrls);
             }
+            startUrlPromises.push(promise);
         }
 
-        console.log(`[Service:runScrapeJob] Waiting for ${startUrlPromises.length} start URL processing branches for job ${config.name}...`);
+        console.log(`[Service:runScrapeJob] Waiting for ${startUrlPromises.length} start URL processing branches...`);
         const resultsArrays = await Promise.all(startUrlPromises);
-        console.log(`[Service:runScrapeJob] Finished processing start URLs for job ${config.name}. Aggregating results...`);
-
         resultsArrays.forEach(results => allExtractedResults.push(...results));
 
     } catch (jobError: any) {

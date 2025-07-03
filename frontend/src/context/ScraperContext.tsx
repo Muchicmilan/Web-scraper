@@ -1,5 +1,12 @@
 import React, { createContext, useState, ReactNode, useCallback, useMemo } from 'react';
-import { ScraperConfiguration, ScrapedDataItem, ApiPaginatedResponse, EngineSettingsData } from "../Types"
+import {
+    ScraperConfiguration,
+    ScrapedDataItem,
+    ApiPaginatedResponse,
+    EngineSettingsData,
+    IAccount,
+    NewAccountData
+} from "../Types"
 import * as api from "../api/ScraperApi"
 import { getApiErrorMessage } from "../api/ScraperApi"
 
@@ -9,6 +16,7 @@ interface ScraperState {
     scrapedData: ScrapedDataItem[];
     pagination: ApiPaginatedResponse<any>['pagination'] | null;
     engineSettings : EngineSettingsData | null;
+    accounts: IAccount[];
     isLoading: boolean;
     isLoadingSettings: boolean;
     error: string | null;
@@ -28,6 +36,8 @@ interface ScraperContextProps extends ScraperState {
     fetchEngineSettings: () => Promise<void>;
     updateEngineSettings: (data: EngineSettingsData) => Promise<boolean>;
     selectConfiguration: (config: ScraperConfiguration | null) => void;
+    fetchAccounts: () => Promise<void>;
+    createAccount: (data: NewAccountData) => Promise<IAccount | null>;
     clearError: () => void;
     clearJobStatus: () => void;
     clearSettingsMessage: () => void;
@@ -39,6 +49,7 @@ const initialState: ScraperState = {
     scrapedData: [],
     pagination: null,
     engineSettings : null,
+    accounts: [],
     isLoading: false,
     isLoadingSettings: false,
     error: null,
@@ -227,6 +238,34 @@ export const ScraperProvider: React.FC<ScraperProviderProps> = ({ children }) =>
         }
     }, []);
 
+    const fetchAccounts = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const fetchedAccounts = await api.getAccounts();
+            setState(prev => ({ ...prev, accounts: fetchedAccounts, isLoading: false }));
+        } catch (err) {
+            setError(getApiErrorMessage(err));
+        }
+    }, []);
+
+    const createAccount = useCallback(async (data: NewAccountData): Promise<IAccount | null> => {
+        setLoading(true);
+        setError(null);
+        try {
+            const newAccount = await api.createAccount(data);
+            setState(prev => ({
+                ...prev,
+                accounts: [...prev.accounts, newAccount].sort((a, b) => a.platform.localeCompare(b.platform)),
+                isLoading: false
+            }));
+            return newAccount;
+        } catch (err) {
+            setError(getApiErrorMessage(err));
+            return null;
+        }
+    }, []);
+
 
     const contextValue = useMemo(() => ({
         ...state,
@@ -240,6 +279,8 @@ export const ScraperProvider: React.FC<ScraperProviderProps> = ({ children }) =>
         fetchScrapedData,
         fetchEngineSettings,
         updateEngineSettings,
+        fetchAccounts,
+        createAccount,
         selectConfiguration,
         clearError,
         clearJobStatus,
@@ -254,6 +295,7 @@ export const ScraperProvider: React.FC<ScraperProviderProps> = ({ children }) =>
         runJob, runMultipleJobs,
         fetchScrapedData,
         fetchEngineSettings, updateEngineSettings,
+        fetchAccounts, createAccount,
         selectConfiguration,
         clearError, clearJobStatus, clearSettingsMessage
     ]);

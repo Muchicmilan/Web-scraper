@@ -8,6 +8,7 @@ export interface FieldMapping {
 export type ListFieldKey = 'startUrls' | 'excludeSelectors' | 'keywordsToFilterBy' | 'closePopupSelectors';
 
 
+
 export interface ScrapedDataItem {
     _id: string;
     configId: string; 
@@ -82,6 +83,7 @@ export interface ScraperConfiguration {
     pageLoadWaitOptions?: PageLoadWaitOptions;
     closePopupSelectors?: string[];
     interactionOptions?: InteractionOptions;
+    loginConfig?: LoginConfig;
     createdAt: string;
     updatedAt: string;
   }
@@ -117,6 +119,28 @@ export interface GetScrapedDataParams {
     limit?: number;
     sort?: string;
     order?: number;
+}
+
+export interface IAccount {
+    _id: string;
+    platform: string;
+    username: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export type NewAccountData = Pick<IAccount, 'platform' | 'username'> & {
+    password?: string;
+};
+
+export interface LoginConfig {
+    requiresLogin: boolean;
+    accountId?: string;
+    loginUrl?: string;
+    usernameSelector?: string;
+    passwordSelector?: string;
+    submitButtonSelector?: string;
+    postLoginSelector?: string;
 }
 
 export type ScraperConfigurationData = Omit<ScraperConfiguration, '_id' | 'createdAt' | 'updatedAt'>;
