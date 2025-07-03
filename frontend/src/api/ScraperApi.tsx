@@ -9,7 +9,7 @@ import {
     ScrapedDataItem,
     EngineSettingsData,
     MultiJobAcceptedResponse,
-    GetScrapedDataParams
+    GetScrapedDataParams, NewAccountData, IAccount
 } from "../Types"
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
@@ -136,4 +136,24 @@ export const getApiErrorMessage = (error: unknown): string => {
         return error.message;
     }
     return "An unknown error occurred.";
+};
+
+export const getAccounts = async (): Promise<IAccount[]> => {
+    try {
+        const response = await API.get<ApiSuccessResponse<IAccount[]>>('/accounts');
+        return response.data.data;
+    } catch (err) {
+        console.error("API Error fetching accounts:", err);
+        throw err;
+    }
+};
+
+export const createAccount = async (accountData: NewAccountData): Promise<IAccount> => {
+    try {
+        const response = await API.post<ApiSuccessResponse<IAccount>>('/accounts', accountData);
+        return response.data.data;
+    } catch (err) {
+        console.error("API Error creating account:", err);
+        throw err;
+    }
 };

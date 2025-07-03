@@ -1,8 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ScraperConfiguration, ScraperConfigurationData, FieldMapping, PageLoadWaitOptions, InteractionOptions, ListFieldKey} from "../Types";
+import {
+    ScraperConfiguration,
+    ScraperConfigurationData,
+    FieldMapping,
+    PageLoadWaitOptions,
+    InteractionOptions,
+    ListFieldKey,
+    LoginConfig
+} from "../Types";
 import { useScraperManager } from '../hooks/useScraperManager';
 import { getApiErrorMessage } from '../api/ScraperApi';
 
+import LoginConfigSection from "../components/ConfigurationFormSections/LoginConfigSection";
 import BasicInfoSection from "../components/ConfigurationFormSections/BasicInfoSection";
 import ClosePopupSection from "../components/ConfigurationFormSections/ClosePopupSection";
 import FieldMappingSection from "../components/ConfigurationFormSections/FieldMappingSection";
@@ -24,6 +33,10 @@ const defaultInteractionOptions: InteractionOptions = {
     loadMoreButtonSelector: undefined, maxClicks: 5, clickDelayMs: 1500, buttonScrollAttempts: 3,
     buttonScrollDelayMs: 400, maxItemsToScrape: undefined,
 };
+const defaultLoginConfig: LoginConfig = {
+    requiresLogin: false, accountId: undefined, loginUrl: '',
+    usernameSelector: '', passwordSelector: '', submitButtonSelector: '', postLoginSelector: ''
+};
 const defaultScreenshotOptions = { fullPage: true };
 
 interface Props {
@@ -34,7 +47,7 @@ interface Props {
 
 
 const ConfigurationForm: React.FC<Props> = ({ initialData, onSaveSuccess, onCancel }) => {
-    const { createConfiguration, updateConfiguration, isLoading } = useScraperManager();
+    const { createConfiguration, updateConfiguration, isLoading, accounts, fetchAccounts } = useScraperManager();
 
     // --- STATE ---
     const [formData, setFormData] = useState<Partial<ScraperConfigurationData>>({});
@@ -44,6 +57,11 @@ const ConfigurationForm: React.FC<Props> = ({ initialData, onSaveSuccess, onCanc
     const [detailSchemaError, setDetailSchemaError] = useState<string | null>(null);
 
     // --- EFFECTS ---
+
+    useEffect(() => {
+        fetchAccounts();
+    }, [fetchAccounts]);
+
     useEffect(() => {
         // Initialize formData (same logic as before)
         if (initialData) {
@@ -67,7 +85,8 @@ const ConfigurationForm: React.FC<Props> = ({ initialData, onSaveSuccess, onCanc
                 screenshotOptions: { ...defaultScreenshotOptions, ...(editData.screenshotOptions ?? {}) },
                 pageLoadWaitOptions: { ...defaultPageLoadWaitOptions, ...(editData.pageLoadWaitOptions ?? {}) },
                 closePopupSelectors: editData.closePopupSelectors || [],
-                interactionOptions: { ...defaultInteractionOptions, ...(editData.interactionOptions ?? {}) }
+                interactionOptions: { ...defaultInteractionOptions, ...(editData.interactionOptions ?? {}) },
+                loginConfig: { ...defaultLoginConfig, ...(editData.loginConfig ?? {}) },
             });
             setSchemaString(JSON.stringify(editData.targetSchema || {}, null, 2));
             setDetailSchemaString(JSON.stringify(editData.detailTargetSchema || {}, null, 2));
@@ -81,12 +100,25 @@ const ConfigurationForm: React.FC<Props> = ({ initialData, onSaveSuccess, onCanc
                 keywordsToFilterBy: [], targetSchema: {}, cronSchedule: '', cronEnabled: false,
                 enableScreenshots: false, screenshotOptions: defaultScreenshotOptions,
                 pageLoadWaitOptions: defaultPageLoadWaitOptions, closePopupSelectors: [],
-                interactionOptions: defaultInteractionOptions
+                interactionOptions: defaultInteractionOptions,
+                loginConfig: defaultLoginConfig,
             });
             setSchemaString('{}'); setDetailSchemaString('{}');
             setSchemaError(null); setDetailSchemaError(null);
         }
     }, [initialData]);
+
+    const handleLoginConfigChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value, type } = e.target;
+        let processedValue: any = value;
+        if (type === 'checkbox') {
+            processedValue = (e.target as HTMLInputElement).checked;
+        }
+        setFormData(prev => ({
+            ...prev,
+            loginConfig: { ...(prev.loginConfig ?? defaultLoginConfig), [name]: processedValue }
+        }));
+    }, []);
 
     const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
@@ -243,6 +275,14 @@ const ConfigurationForm: React.FC<Props> = ({ initialData, onSaveSuccess, onCanc
             if (strategy === 'loadMoreButton') { /* ... load more button validation ... */ }
             if (strategy === 'fixedScrolls') { /* ... fixed scrolls validation ... */ }
         }
+
+        const loginOpts = formData.loginConfig;
+        if (loginOpts?.requiresLogin) {
+            if (!loginOpts.accountId || !loginOpts.loginUrl || !loginOpts.usernameSelector || !loginOpts.passwordSelector || !loginOpts.submitButtonSelector || !loginOpts.postLoginSelector) {
+                alert("All fields in the Login Configuration section are required when login is enabled.");
+                return;
+            }
+        }
         // --- END VALIDATION ---
 
 
@@ -289,7 +329,16 @@ const ConfigurationForm: React.FC<Props> = ({ initialData, onSaveSuccess, onCanc
                 clickDelayMs: (strategy === 'loadMoreButton') ? (interactOpts.clickDelayMs ?? defaultInteractionOptions.clickDelayMs) : undefined,
                 buttonScrollAttempts: (strategy === 'loadMoreButton') ? (interactOpts.buttonScrollAttempts ?? defaultInteractionOptions.buttonScrollAttempts) : undefined,
                 buttonScrollDelayMs: (strategy === 'loadMoreButton') ? (interactOpts.buttonScrollDelayMs ?? defaultInteractionOptions.buttonScrollDelayMs) : undefined,
-            } : undefined
+            } : undefined,
+            loginConfig: loginOpts?.requiresLogin ? {
+                requiresLogin: true,
+                accountId: loginOpts.accountId,
+                loginUrl: loginOpts.loginUrl,
+                usernameSelector: loginOpts.usernameSelector,
+                passwordSelector: loginOpts.passwordSelector,
+                submitButtonSelector: loginOpts.submitButtonSelector,
+                postLoginSelector: loginOpts.postLoginSelector,
+            } : { requiresLogin: false }
         };
         // --- END DATA PREPARATION ---
 
@@ -404,6 +453,13 @@ const ConfigurationForm: React.FC<Props> = ({ initialData, onSaveSuccess, onCanc
                 formData={formData}
                 onInputChange={handleInputChange}
                 onCheckboxChange={handleCheckboxChange}
+            />
+
+            <LoginConfigSection
+                options={formData.loginConfig}
+                accounts={accounts}
+                onChange={handleLoginConfigChange}
+                onCheckboxChange={(e) => handleLoginConfigChange(e)} // Can reuse the same handler
             />
 
 

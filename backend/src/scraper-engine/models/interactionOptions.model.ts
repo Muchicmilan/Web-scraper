@@ -11,6 +11,9 @@ export interface IInteractionOptions {
     maxItemsToScrape?: number;
     buttonScrollAttempts?: number;
     buttonScrollDelayMs?: number;
+    scrollAmount?: number;
+    maxEmptyScrolls?: number;
+    contentLoadWaitMs?: number;
 }
 
 export interface IPageLoadWait {

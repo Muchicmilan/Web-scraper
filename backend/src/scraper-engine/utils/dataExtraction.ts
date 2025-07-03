@@ -1,91 +1,8 @@
-import {IFieldMapping, IScraperConfiguration} from "../models/scraperConfig.model.js";
-import {ExtractedData, ListItemEvalResult} from "../scraper-engine-types.js";
-import {Page} from "puppeteer";
+import { IScraperConfiguration, IFieldMapping } from "../models/scraperConfig.model.js";
+import { ExtractedData } from "../scraper-engine-types.js";
+import { Page } from "puppeteer";
+import { extractDataFromElement } from "./browserSideLogic.js";
 
-export function browserProcessListItem(
-    listItemElement: Element,
-    primaryMappings: IFieldMapping[],
-    pageUrl: string
-): ListItemEvalResult {
-
-    function set(obj: any, path: string | string[], value: any): void {
-        const keys = Array.isArray(path) ? path : path.split('.');
-        let current = obj;
-        for (let i = 0; i < keys.length - 1; i++) {
-            const key = keys[i];
-            if (current[key] === undefined || current[key] === null) {
-                current[key] = {};
-            }
-            current = current[key];
-        }
-        if (keys.length > 0) {
-            current[keys[keys.length - 1]] = value;
-        }
-    }
-
-    function extractData(targetElement: Element | null, mappings: IFieldMapping[]): ExtractedData {
-        if (!targetElement) return {};
-        const resultData: ExtractedData = {};
-        for (const mapping of mappings) {
-            if (!mapping || !mapping.fieldName || !mapping.selector || !mapping.extractFrom) continue;
-            let value: string | null | undefined = undefined;
-            try {
-                const elementsToQuery = (mapping.selector === ':scope' || mapping.selector === '*')
-                    ? [targetElement]
-                    : Array.from(targetElement.querySelectorAll(mapping.selector));
-
-                if (elementsToQuery.length > 0) {
-                    if (mapping.extractFrom === 'text') {
-                        const textParts: string[] = [];
-                        elementsToQuery.forEach(elem => {
-                            const text = (elem as HTMLElement).innerText?.trim();
-                            if (text) textParts.push(text);
-                        });
-                        if (textParts.length > 0) value = textParts.join(' ').replace(/\s+/g, ' ').trim();
-                    } else {
-                        const firstTarget = elementsToQuery[0];
-                        if (mapping.extractFrom === 'attribute' && mapping.attributeName) {
-                            value = firstTarget.getAttribute(mapping.attributeName)?.trim();
-                            if (value && (mapping.attributeName === 'href' || mapping.attributeName === 'src')) {
-                                try { value = new URL(value, pageUrl).href; } catch (e) {}
-                            }
-                        } else if (mapping.extractFrom === 'html') {
-                            value = firstTarget.innerHTML?.trim();
-                        }
-                    }
-                }
-            } catch (e: any) { console.error(`[Browser Context] Error processing selector "${mapping.selector}" for field "${mapping.fieldName}": ${e.message}`); }
-            if (value !== undefined && value !== null && value !== '') set(resultData, mapping.fieldName, value);
-        }
-        return resultData;
-    }
-
-    const listData = extractData(listItemElement, primaryMappings);
-
-    let detailUrl: string | null = null;
-    try {
-        const links = Array.from(listItemElement.querySelectorAll('a'));
-        const baseDomain = new URL(pageUrl).hostname.toLowerCase();
-
-        for (const link of links) {
-            const href = link.getAttribute('href')?.trim();
-            if (href && href !== '#' && !href.startsWith('javascript:') && !href.startsWith('mailto:')) {
-                try {
-                    const absoluteURL = new URL(href, pageUrl);
-                    if (absoluteURL.protocol.startsWith('http') && absoluteURL.hostname.toLowerCase() === baseDomain) {
-                        detailUrl = absoluteURL.href;
-                        break;
-                    }
-                } catch (e) {}
-            }
-        }
-    } catch (e: any) {
-        console.error(`[Browser Context] Error extracting links: ${e.message}`);
-        return { listData, detailUrl: null, error: `Link extraction failed: ${e.message}` };
-    }
-
-    return { listData, detailUrl };
-}
 
 export async function extractDetailData(
     page: Page,
@@ -116,68 +33,20 @@ export async function extractDetailData(
 
     try {
         const extractedData = await page.evaluate(
-            (selector: string, mappings: IFieldMapping[], currentUrl: string) => {
-                function set(obj: any, path: string | string[], value: any): void {
-                    const keys = Array.isArray(path) ? path : path.split('.');
-                    let current = obj;
-                    for (let i = 0; i < keys.length - 1; i++) {
-                        const key = keys[i];
-                        if (current[key] === undefined || current[key] === null) {
-                            current[key] = {};
-                        }
-                        current = current[key];
-                    }
-                    if (keys.length > 0) {
-                        current[keys[keys.length - 1]] = value;
-                    }
-                }
+            (selector: string, mappings: IFieldMapping[], currentUrl: string, extractorFnString: string) => {
+                const extractor = new Function(`return ${extractorFnString}`)();
 
-                function extractData(targetElement: Element | null, mappings: IFieldMapping[], pageUrl: string): ExtractedData {
-                    if (!targetElement) return {};
-                    const resultData: ExtractedData = {};
-                    for (const mapping of mappings) {
-                        if (!mapping || !mapping.fieldName || !mapping.selector || !mapping.extractFrom) continue;
-                        let value: string | null | undefined = undefined;
-                        try {
-                            const elementsToQuery = (mapping.selector === ':scope' || mapping.selector === '*')
-                                ? [targetElement]
-                                : Array.from(targetElement.querySelectorAll(mapping.selector));
-
-                            if (elementsToQuery.length > 0) {
-                                if (mapping.extractFrom === 'text') {
-                                    const textParts: string[] = [];
-                                    elementsToQuery.forEach(elem => {
-                                        const text = (elem as HTMLElement).innerText?.trim();
-                                        if (text) textParts.push(text);
-                                    });
-                                    if (textParts.length > 0) value = textParts.join(' ').replace(/\s+/g, ' ').trim();
-                                } else {
-                                    const firstTarget = elementsToQuery[0];
-                                    if (mapping.extractFrom === 'attribute' && mapping.attributeName) {
-                                        value = firstTarget.getAttribute(mapping.attributeName)?.trim();
-                                        if (value && (mapping.attributeName === 'href' || mapping.attributeName === 'src')) {
-                                            try { value = new URL(value, pageUrl).href; } catch (e) {}
-                                        }
-                                    } else if (mapping.extractFrom === 'html') {
-                                        value = firstTarget.innerHTML?.trim();
-                                    }
-                                }
-                            }
-                        } catch (e: any) { console.error(`[Browser Context] Error processing selector "${mapping.selector}" for field "${mapping.fieldName}": ${e.message}`); }
-                        if (value !== undefined && value !== null && value !== '') set(resultData, mapping.fieldName, value);
-                    }
-                    return resultData;
-                }
                 const mainElement = document.querySelector(selector);
                 if (!mainElement) {
                     console.warn(`[Browser Context] Detail item selector "${selector}" not found.`);
                     return {};
                 }
-                return extractData(mainElement, mappings, currentUrl);
+                return extractor(mainElement, mappings, currentUrl);
             },
             itemSelectorToUse,
             mappingsToUse,
-            pageUrl
+            pageUrl,
+            extractDataFromElement.toString()
         );
 
         console.log(`${logPrefix} Extracted ${Object.keys(extractedData).length} fields.`);

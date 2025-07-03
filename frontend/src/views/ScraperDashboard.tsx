@@ -4,6 +4,7 @@ import ConfigurationList from '../components/ConfigurationList';
 import ConfigurationForm from '../components/ConfigurationForm';
 import ScrapedDataViewer from '../components/ScraperDataViewer';
 import EngineSettings from '../components/EngineSettings'
+import AccountManager from '../components/AccountManager';
 import { ScraperConfiguration } from '../Types';
 
 const ScraperDashboard: React.FC = () => {
@@ -21,7 +22,7 @@ const ScraperDashboard: React.FC = () => {
         clearSettingsMessage
     } = useScraperManager();
 
-    const [viewMode, setViewMode] = useState<'list' | 'view' | 'edit' | 'create' | 'settings' > ('list');
+    const [viewMode, setViewMode] = useState<'list' | 'view' | 'edit' | 'create' | 'settings' | 'accounts' > ('list');
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
@@ -85,21 +86,43 @@ const ScraperDashboard: React.FC = () => {
         setViewMode('settings');
     };
 
+    const handleShowAccounts = () => {
+        selectConfiguration(null);
+        setViewMode('accounts');
+    };
+
 
     return (
         <div className="scraper-dashboard" style={{ maxWidth: '1200px', margin: '20px auto', padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
                 <h1>Scraper Dashboard</h1>
-                <button onClick={viewMode === 'settings' ? handleBackToList : handleShowSettings} style={{ padding: '8px 15px' }}>
-                    {viewMode === 'settings' ? 'Back to List' : 'Engine Settings'}
-                </button>
+                <div>
+                    <button onClick={viewMode === 'accounts' ? handleBackToList : handleShowAccounts}
+                            style={{padding: '8px 15px', marginRight: '10px'}}>
+                        {viewMode === 'accounts' ? 'Back to List' : 'Account Management'}
+                    </button>
+                    <button onClick={viewMode === 'settings' ? handleBackToList : handleShowSettings}
+                            style={{padding: '8px 15px'}}>
+                        {viewMode === 'settings' ? 'Back to List' : 'Engine Settings'}
+                    </button>
+                </div>
             </div>
 
             {/* Status/Error Messages */}
             {isLoading && <div className="loading-indicator">Loading...</div>}
-            {error && <div className="error-message">Error: {error} <button onClick={clearError}>×</button></div>}
-            {jobStatus && <div className="job-status">Status: {jobStatus} <button onClick={clearJobStatus}>×</button></div>}
-            {settingsMessage && viewMode !== 'settings' && <div className="job-status" style={{ backgroundColor: '#d4edda', color: '#155724', borderColor: '#c3e6cb' }}> {settingsMessage} <button onClick={clearSettingsMessage}>×</button></div>}
+            {error && <div className="error-message">Error: {error}
+                <button onClick={clearError}>×</button>
+            </div>}
+            {jobStatus && <div className="job-status">Status: {jobStatus}
+                <button onClick={clearJobStatus}>×</button>
+            </div>}
+            {settingsMessage && viewMode !== 'settings' && <div className="job-status" style={{
+                backgroundColor: '#d4edda',
+                color: '#155724',
+                borderColor: '#c3e6cb'
+            }}> {settingsMessage}
+                <button onClick={clearSettingsMessage}>×</button>
+            </div>}
 
             {/* Conditional Rendering based on viewMode */}
             {viewMode === 'list' && (
@@ -154,6 +177,10 @@ const ScraperDashboard: React.FC = () => {
 
             {viewMode === 'settings' && (
                 <EngineSettings />
+            )}
+
+            {viewMode === 'accounts' && (
+                <AccountManager />
             )}
 
         </div>

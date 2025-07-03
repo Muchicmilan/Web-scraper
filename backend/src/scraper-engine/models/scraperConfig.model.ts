@@ -6,6 +6,7 @@ import {
     PageLoadWaitOptionsSchema
 } from "./interactionOptions.model.js";
 import cron from "node-cron";
+import {ILoginConfig, LoginConfigSchema} from "./login.model.js";
 
 export interface IFieldMapping {
     fieldName: string;
@@ -42,6 +43,7 @@ export interface IScraperConfiguration extends Document {
     pageLoadWaitOptions?: IPageLoadWait;
     interactionOptions?: IInteractionOptions;
     closePopupSelectors?: string[];
+    loginConfig?: ILoginConfig;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -80,6 +82,7 @@ const ScraperConfigurationSchema = new Schema<IScraperConfiguration>({
     interactionOptions: {type: InteractionOptionsSchema, required: false},
     detailFieldMappings: {type: [FieldMappingSchema], required:false},
     keywordsToFilterBy: { type: [String], required: false },
+    loginConfig: {type: LoginConfigSchema, required: false,},
     cronSchedule: {type: String, required: false, validate: {
             validator: function(v: string | null | undefined){
                 if (!v) return true;
